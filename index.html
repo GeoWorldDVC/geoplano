@@ -9,7 +9,10 @@
 <meta name="theme-color" content="#0f141a">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
-<title>GeoPlano Editor</title>
+<link rel="icon" type="image/x-icon" href="favicon.ico">
+<link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="favicon-16.png">
+<title>GeoPlano Editor — YPC Consulting Group</title>
 <style>/* required styles */
 
 .leaflet-pane,
@@ -711,6 +714,7 @@ https://github.com/nodeca/pako/blob/main/LICENSE
   .side{width:340px;flex:none;background:var(--panel);border-left:1px solid var(--line);display:flex;flex-direction:column;box-shadow:-6px 0 24px rgba(0,0,0,.35)}
   .side header{display:flex;align-items:center;gap:8px;padding:12px 14px;background:var(--panel2);border-bottom:1px solid var(--line);flex-wrap:wrap}
   .logo{width:24px;height:24px;border-radius:6px;background:var(--hivis);display:flex;align-items:center;justify-content:center;color:#1a1300;font:800 13px var(--sans)}
+  .logo-img{height:30px;width:auto;background:#fff;border-radius:6px;padding:3px 6px;display:block;flex:none}
   header h1{font-size:15px;margin:0;font-weight:700;flex:1}
   .pill{font:700 10px var(--sans);padding:3px 8px;border-radius:20px;border:1px solid var(--line);cursor:pointer}
   .pill.admin{background:rgba(255,210,26,.15);color:var(--hivis);border-color:var(--hivis-d)}
@@ -772,11 +776,11 @@ https://github.com/nodeca/pako/blob/main/LICENSE
   @media (max-width:760px){
     .app{position:relative}
     #map{position:absolute;inset:0}
-    .side{position:fixed;left:0;right:0;bottom:0;top:auto;width:auto;height:auto;max-height:84vh;border-left:none;border-top:1px solid var(--line);border-radius:18px 18px 0 0;transform:translateY(calc(100% - 62px));transition:transform .25s ease;z-index:1200}
+    .side{position:fixed;left:0;right:0;bottom:0;top:auto;width:auto;height:auto;max-height:84dvh;border-left:none;border-top:1px solid var(--line);border-radius:18px 18px 0 0;transform:translateY(calc(100% - 66px - env(safe-area-inset-bottom,0px)));transition:transform .25s ease;z-index:1200;padding-bottom:env(safe-area-inset-bottom,0px)}
     .side.open{transform:translateY(0)}
     .sheet-handle{display:block}
     .side header{border-radius:0}
-    .scroll{padding:12px 16px 30px;gap:16px}
+    .scroll{padding:12px 16px calc(30px + env(safe-area-inset-bottom,0px));gap:16px}
     .btn{padding:14px 12px;font-size:15px;border-radius:12px}
     .btn.sm{padding:12px;font-size:13.5px}
     .inp{padding:12px;font-size:16px}
@@ -785,9 +789,10 @@ https://github.com/nodeca/pako/blob/main/LICENSE
     .langtog button{padding:8px 11px;font-size:13px}
     .pill{padding:5px 11px;font-size:11px}
     .coordbar,.scalebar{display:none}
-    .gps-fab{bottom:78px;width:52px;height:52px;font-size:26px}
-    .add-fab{display:flex;bottom:140px}
-    .leaflet-control-zoom{margin-top:10px!important;margin-right:10px!important}
+    .gps-fab{bottom:calc(86px + env(safe-area-inset-bottom,0px));width:52px;height:52px;font-size:26px}
+    .add-fab{display:flex;bottom:calc(150px + env(safe-area-inset-bottom,0px))}
+    .leaflet-control-zoom{margin-top:calc(10px + env(safe-area-inset-top,0px))!important;margin-right:calc(10px + env(safe-area-inset-right,0px))!important}
+    .leaflet-control-attribution{margin-bottom:env(safe-area-inset-bottom,0px)!important}
   }
   body.viewer .admin-only{display:none !important}
   .modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:2000;display:none;align-items:center;justify-content:center}
@@ -817,7 +822,7 @@ https://github.com/nodeca/pako/blob/main/LICENSE
   <aside class="side">
     <div class="sheet-handle" id="sheetHandle"></div>
     <header>
-      <div class="logo">GP</div><h1>GeoPlano</h1>
+      <img class="logo-img" src="logo-ypc.png" alt="YPC Consulting Group, PL"><h1>GeoPlano</h1>
       <span class="pill admin" id="rolePill"></span>
       <button class="iconbtn admin-only" id="gearBtn" title="PIN">⚙</button>
       <div class="langtog"><button id="langEs">ES</button><button id="langEn">EN</button></div>
@@ -838,11 +843,15 @@ https://github.com/nodeca/pako/blob/main/LICENSE
         </div>
         <input type="file" id="jsonInput" accept="application/json,.json">
         <button class="btn sm" id="precacheBtn" data-i18n="precache"></button>
+        <button class="btn sm" id="offlineBtn" data-i18n="dlOffline"></button>
         <div class="row">
           <button class="btn sm" id="cloudPullBtn" data-i18n="cloudPull"></button>
           <button class="btn sm admin-only" id="cloudPushBtn" data-i18n="cloudPush"></button>
           <button class="btn sm admin-only" id="cloudCfgBtn" data-i18n="cloudCfg" style="flex:0 0 auto;width:auto;padding:7px 11px"></button>
         </div>
+        <div id="gsiBtnWrap" style="display:none;margin:2px 0"></div>
+        <button class="btn sm" id="beLoginBtn" style="display:none"></button>
+        <button class="btn sm admin-only" id="beUsersBtn" data-i18n="beUsers" style="display:none"></button>
         <button class="btn sm" id="gConnectBtn" data-i18n="gConnect"></button>
         <div class="status" id="projStatus"></div>
       </div>
@@ -947,18 +956,39 @@ https://github.com/nodeca/pako/blob/main/LICENSE
   <header><h2 id="gmTitle"></h2><button class="x" id="gmX">×</button></header>
   <div class="mbody"><input class="inp" id="gmInput" style="font-family:var(--sans)"></div>
   <div class="mfoot"><button class="btn cancel2" id="gmCancel" data-i18n="cancel"></button><button class="btn ok" id="gmOk" data-i18n="ok"></button></div>
+</div></div>
 <div class="modal-bg" id="cloudBg"><div class="modal" style="width:380px">
   <header><h2 data-i18n="cloudTitle"></h2><button class="x" id="cloudX">×</button></header>
   <div class="mbody">
-    <div class="field"><label data-i18n="cloudUrl"></label><input class="inp" id="supaUrlIn" placeholder="https://xxxx.supabase.co"></div>
-    <div class="field"><label data-i18n="cloudKey"></label><input class="inp" id="supaKeyIn" placeholder="eyJ..."></div>
+    <div class="field"><label data-i18n="beUrl"></label><input class="inp" id="beUrlIn" placeholder="https://geoplano-api.example.com"></div>
+    <div class="status" data-i18n="beHelp"></div>
     <hr style="margin:2px 0">
     <div class="field"><label data-i18n="gClientId"></label><input class="inp" id="gClientIdIn" placeholder="...apps.googleusercontent.com"></div>
+    <div class="status" data-i18n="beClientHelp"></div>
+    <hr style="margin:2px 0">
+    <div class="status" data-i18n="legacyHelp" style="opacity:.7"></div>
+    <div class="field"><label data-i18n="cloudUrl"></label><input class="inp" id="supaUrlIn" placeholder="https://xxxx.supabase.co"></div>
+    <div class="field"><label data-i18n="cloudKey"></label><input class="inp" id="supaKeyIn" placeholder="eyJ..."></div>
     <div class="field"><label data-i18n="gFolder"></label><input class="inp" id="gFolderIn" placeholder="(opcional) ID carpeta Drive"></div>
     <div class="status" data-i18n="gHelp"></div>
     <div class="status" data-i18n="cloudHelp"></div>
   </div>
   <div class="mfoot"><button class="btn cancel2" id="cloudCancel" data-i18n="cancel"></button><button class="btn ok" id="cloudSave" data-i18n="ok"></button></div>
+</div></div>
+<div class="modal-bg" id="usersBg"><div class="modal" style="width:420px">
+  <header><h2 data-i18n="usersTitle"></h2><button class="x" id="usersX">×</button></header>
+  <div class="mbody">
+    <div class="row" style="align-items:flex-end">
+      <div class="field" style="flex:2"><label data-i18n="usersEmail"></label><input class="inp" id="newUserEmail" placeholder="persona@ypcconsulting.com" style="font-family:var(--sans)"></div>
+      <div class="field" style="flex:1"><label data-i18n="usersRole"></label>
+        <select class="inp" id="newUserRole"><option value="viewer" data-i18n="roleViewer"></option><option value="admin" data-i18n="roleAdmin"></option></select></div>
+      <button class="btn sm" id="addUserBtn" data-i18n="usersAdd" style="width:auto;padding:9px 12px"></button>
+    </div>
+    <div class="status" id="usersStatus"></div>
+    <hr style="margin:2px 0">
+    <div class="ptlist" id="userList"></div>
+  </div>
+  <div class="mfoot"><button class="btn cancel2" id="usersClose" data-i18n="ok"></button></div>
 </div></div>
 <script>
 const I18N={
@@ -1015,7 +1045,7 @@ function applyLang(){document.documentElement.lang=lang;
   if(numPages)$('pginfo').textContent=numPages+' '+t('pagesWord');
   $('lockBtn').textContent=locked?t('lockEdit'):t('lockFix');
   $('langEs').classList.toggle('active',lang==='es');$('langEn').classList.toggle('active',lang==='en');
-  renderPtList();applyRoleUI();if(typeof refreshGpsLang==='function')refreshGpsLang();}
+  renderPtList();applyRoleUI();if(typeof refreshGpsLang==='function')refreshGpsLang();if(typeof beRefreshLoginBtn==='function')beRefreshLoginBtn();}
 $('langEs').onclick=()=>{lang='es';applyLang();};$('langEn').onclick=()=>{lang='en';applyLang();};
 proj4.defs("EPSG:2237","+proj=tmerc +lat_0=24.33333333333333 +lon_0=-82 +k=0.999941177 +x_0=200000.0001016002 +y_0=0 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=us-ft +no_defs");
 pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
@@ -1179,9 +1209,9 @@ function applyRoleUI(){document.body.classList.toggle('viewer',role!=='admin');
   $('rolePill').className='pill '+(role==='admin'?'admin':'viewer');$('rolePill').textContent=t(role==='admin'?'roleAdmin':'roleViewer');
   Object.values(corners).forEach(m=>{if(m.dragging)m.dragging[(role==='admin'&&!locked)?'enable':'disable']();});
   points.forEach(p=>{if(p.marker.dragging)p.marker.dragging[role==='admin'?'enable':'disable']();});updatePlaneInteractivity();}
-$('rolePill').onclick=()=>{if(role==='admin'){role='viewer';applyRoleUI();}
+$('rolePill').onclick=()=>{if(beAuthed())return;if(role==='admin'){role='viewer';applyRoleUI();}
   else{if(adminPin){gmOpen(t('enterPin'),'',true,v=>{if(v===adminPin){role='admin';applyRoleUI();}else{$('projStatus').className='status warn';$('projStatus').textContent=t('wrongPin');}});}else{role='admin';applyRoleUI();}}};
-$('gearBtn').onclick=()=>{gmOpen(t('setPinTitle'),adminPin,true,async v=>{adminPin=v||'';if(DB){await idbPut('settings',{key:'app',adminPin,supaUrl,supaKey,gClientId,gFolderId}).catch(()=>{});}$('projStatus').className='status ok';$('projStatus').textContent=t('pinSet');});};
+$('gearBtn').onclick=()=>{gmOpen(t('setPinTitle'),adminPin,true,async v=>{adminPin=v||'';if(DB){await idbPut('settings',{key:'app',adminPin,supaUrl,supaKey,gClientId,gFolderId,backendUrl}).catch(()=>{});}$('projStatus').className='status ok';$('projStatus').textContent=t('pinSet');});};
 let curName='';
 function gatherState(){return{name:curName,baseKey,opacity:imgW?parseFloat(planeImg.style.opacity||0.65):0.65,
   center:{lat:map.getCenter().lat,lng:map.getCenter().lng},zoom:map.getZoom(),
@@ -1217,8 +1247,14 @@ $('precacheBtn').onclick=async()=>{if(!DB){$('projStatus').className='status war
   async function worker(){while(i<urls.length){const u=urls[i++];try{const r=await fetch(u,{mode:'cors'});if(r.ok){const bl=await r.blob();await idbPut('tiles',{url:u,blob:bl});}}catch(e){}done++;if(done%25===0)$('projStatus').textContent=t('precaching')+' '+done+'/'+urls.length;}}
   await Promise.all(Array.from({length:pool},worker));
   $('projStatus').className='status ok';$('projStatus').textContent=t('precacheDone')+' '+done;};
+$('offlineBtn').onclick=async()=>{if(!DB){$('projStatus').className='status warn';$('projStatus').textContent=t('noStore');return;}
+  if(curName){const rec=gatherState();rec.name=curName;rec.updated=rec.updated||Date.now();await idbPut('projects',rec);await refreshProjects();$('projSelect').value=curName;}
+  await $('precacheBtn').onclick();
+  $('projStatus').className='status ok';$('projStatus').textContent=t('dlOfflineDone');};
 /* extra i18n */
 I18N.es.loadKmz='📂 Cargar .KMZ';I18N.en.loadKmz='📂 Load .KMZ';
+I18N.es.dlOffline='📥 Descargar proyecto para uso offline';I18N.en.dlOffline='📥 Download project for offline use';
+I18N.es.dlOfflineDone='✓ Proyecto y mapa de la zona guardados para uso offline.';I18N.en.dlOfflineDone='✓ Project and area map saved for offline use.';
 I18N.es.kmzLoaded='✓ KMZ cargado:';I18N.en.kmzLoaded='✓ KMZ loaded:';
 I18N.es.kmzErr='No se pudo leer el KMZ.';I18N.en.kmzErr='Could not read the KMZ.';
 /* export */
@@ -1340,6 +1376,9 @@ I18N.es.cloudKey="Clave anónima (anon public key)";I18N.en.cloudKey="Anonymous 
 I18N.es.cloudHelp="Pega la URL y la anon key de tu proyecto Supabase. Se guardan en este dispositivo. Configura igual en cada teléfono.";
 I18N.en.cloudHelp="Paste your Supabase project URL and anon key. Stored on this device. Configure the same on each phone.";
 let supaUrl='',supaKey='';
+let backendUrl='',beToken='',beUser=null;
+function backendOn(){return !!backendUrl;}
+function beAuthed(){return !!(backendUrl&&beToken&&beUser);}
 function supaOn(){return !!(supaUrl&&supaKey);}
 function supaH(extra){return Object.assign({apikey:supaKey,Authorization:'Bearer '+supaKey,'Content-Type':'application/json'},extra||{});}
 function supaBase(){return supaUrl.replace(/\/+$/,'')+'/rest/v1/projects';}
@@ -1357,12 +1396,12 @@ async function supaPushAll(){if(!supaOn()||!DB){$('projStatus').className='statu
     $('projStatus').className='status ok';$('projStatus').textContent=t('cloudPushed')+' '+list.length;}
   catch(e){$('projStatus').className='status warn';$('projStatus').textContent=t('cloudErr')+' '+(e.message||'');}}
 $('cloudPullBtn').onclick=cloudPull;$('cloudPushBtn').onclick=cloudPushAll;
-$('cloudCfgBtn').onclick=()=>{$('supaUrlIn').value=supaUrl;$('supaKeyIn').value=supaKey;$('gClientIdIn').value=gClientId;$('gFolderIn').value=gFolderId;$('cloudBg').classList.add('open');};
+$('cloudCfgBtn').onclick=()=>{$('beUrlIn').value=backendUrl;$('supaUrlIn').value=supaUrl;$('supaKeyIn').value=supaKey;$('gClientIdIn').value=gClientId;$('gFolderIn').value=gFolderId;$('cloudBg').classList.add('open');};
 $('cloudX').onclick=()=>$('cloudBg').classList.remove('open');$('cloudCancel').onclick=()=>$('cloudBg').classList.remove('open');
 $('cloudBg').addEventListener('click',e=>{if(e.target===$('cloudBg'))$('cloudBg').classList.remove('open');});
-$('cloudSave').onclick=async()=>{supaUrl=$('supaUrlIn').value.trim();supaKey=$('supaKeyIn').value.trim();gClientId=$('gClientIdIn').value.trim();gFolderId=$('gFolderIn').value.trim();gTokenClient=null;gFolderResolved='';
-  if(DB)await idbPut('settings',{key:'app',adminPin,supaUrl,supaKey,gClientId,gFolderId}).catch(()=>{});
-  $('cloudBg').classList.remove('open');$('projStatus').className='status ok';$('projStatus').textContent=t('cloudSaved');};
+$('cloudSave').onclick=async()=>{supaUrl=$('supaUrlIn').value.trim();supaKey=$('supaKeyIn').value.trim();gClientId=$('gClientIdIn').value.trim();gFolderId=$('gFolderIn').value.trim();backendUrl=$('beUrlIn').value.trim().replace(/\/+$/,'');gTokenClient=null;gFolderResolved='';
+  if(DB)await idbPut('settings',{key:'app',adminPin,supaUrl,supaKey,gClientId,gFolderId,backendUrl}).catch(()=>{});
+  $('cloudBg').classList.remove('open');$('projStatus').className='status ok';$('projStatus').textContent=t('cloudSaved');beRefreshLoginBtn();};
 /* ===== Google Drive sync ===== */
 I18N.es.gConnect="\ud83d\udd17 Google";I18N.en.gConnect="\ud83d\udd17 Google";
 I18N.es.gConnected="\u2713 Conectado a Google Drive.";I18N.en.gConnected="\u2713 Connected to Google Drive.";
@@ -1372,7 +1411,7 @@ I18N.es.gHelp="Google Drive: pega tu Client ID y toca \ud83d\udd17 Google para i
 I18N.en.gHelp="Google Drive: paste your Client ID and tap \ud83d\udd17 Google to sign in with your Workspace account. (Optional) a shared team folder ID.";
 let gClientId="",gFolderId="",gToken="",gTokenExp=0,gTokenClient=null,gFolderResolved="",gPending=null;
 function googleOn(){return !!gClientId;}
-function anyCloud(){return googleOn()||supaOn();}
+function anyCloud(){return backendOn()||googleOn()||supaOn();}
 function gReady(){return typeof google!=="undefined"&&google.accounts&&google.accounts.oauth2;}
 function gEnsureClient(){if(!gTokenClient&&gReady()&&gClientId){gTokenClient=google.accounts.oauth2.initTokenClient({client_id:gClientId,scope:"https://www.googleapis.com/auth/drive",callback:function(resp){if(resp&&resp.access_token){gToken=resp.access_token;gTokenExp=Date.now()+((resp.expires_in||3500)*1000)-60000;if(gPending){gPending.res();gPending=null;}}else if(gPending){gPending.rej(new Error("auth"));gPending=null;}}});}return gTokenClient;}
 function gConnect(interactive){return new Promise(function(res,rej){if(!gReady()){rej(new Error("GIS"));return;}if(!gClientId){rej(new Error("Client ID"));return;}gEnsureClient();gPending={res:res,rej:rej};try{gTokenClient.requestAccessToken({prompt:interactive?"consent":""});}catch(e){gPending=null;rej(e);}});}
@@ -1399,13 +1438,144 @@ async function drivePull(){$('projStatus').className='status';$('projStatus').te
 async function drivePushAll(){$('projStatus').className='status';$('projStatus').textContent=t('cloudPushing');
   try{const list=await idbAll('projects');for(const rec of list)await gUpsert(rec);$('projStatus').className='status ok';$('projStatus').textContent=t('cloudPushed')+' '+list.length;}
   catch(e){$('projStatus').className='status warn';$('projStatus').textContent=t('cloudErr')+' '+(e.message||'');}}
-async function cloudPull(){if(googleOn())return drivePull();if(supaOn())return supaPull();$('projStatus').className='status warn';$('projStatus').textContent=t('cloudNo');}
-async function cloudPushAll(){if(googleOn())return drivePushAll();if(supaOn())return supaPushAll();$('projStatus').className='status warn';$('projStatus').textContent=t('cloudNo');}
-async function cloudPushRec(rec){try{if(googleOn())return await gUpsert(rec);if(supaOn())return await supaPushRec(rec);}catch(e){}}
+async function cloudPull(){if(backendOn())return bePull();if(googleOn())return drivePull();if(supaOn())return supaPull();$('projStatus').className='status warn';$('projStatus').textContent=t('cloudNo');}
+async function cloudPushAll(){if(backendOn())return bePushAll();if(googleOn())return drivePushAll();if(supaOn())return supaPushAll();$('projStatus').className='status warn';$('projStatus').textContent=t('cloudNo');}
+async function cloudPushRec(rec){if(backendOn())return bePushRec(rec);try{if(googleOn())return await gUpsert(rec);if(supaOn())return await supaPushRec(rec);}catch(e){}}
 $('gConnectBtn').onclick=async function(){try{await gConnect(true);$('projStatus').className='status ok';$('projStatus').textContent=t('gConnected');drivePull();}catch(e){$('projStatus').className='status warn';$('projStatus').textContent=t('cloudErr')+' '+(e.message||'');}};
+/* ===== backend mode (server auth + roles + sync) ===== */
+I18N.es.beUrl="URL del servidor (backend)";I18N.en.beUrl="Server URL (backend)";
+I18N.es.beHelp="Inicia sesión con Google contra tu servidor. Los roles (admin / solo-lectura) se controlan en el servidor.";
+I18N.en.beHelp="Sign in with Google against your server. Roles (admin / read-only) are enforced on the server.";
+I18N.es.beClientHelp="Google OAuth Client ID (el mismo que usa el servidor).";I18N.en.beClientHelp="Google OAuth Client ID (same one the server uses).";
+I18N.es.legacyHelp="Heredado (opcional): Supabase / Google Drive. Usa el servidor de arriba si está configurado.";
+I18N.en.legacyHelp="Legacy (optional): Supabase / Google Drive. Prefer the server above when set.";
+I18N.es.beLogout="Cerrar sesión";I18N.en.beLogout="Sign out";
+I18N.es.beUsers="👥 Administrar usuarios";I18N.en.beUsers="👥 Manage users";
+I18N.es.beSignedIn="✓ Sesión iniciada:";I18N.en.beSignedIn="✓ Signed in:";
+I18N.es.beSignedOut="Sesión cerrada.";I18N.en.beSignedOut="Signed out.";
+I18N.es.beAuthErr="Error de inicio de sesión:";I18N.en.beAuthErr="Sign-in error:";
+I18N.es.beNeedLogin="Inicia sesión primero.";I18N.en.beNeedLogin="Sign in first.";
+I18N.es.beViewerRO="Solo lectura: no puedes guardar en el servidor.";I18N.en.beViewerRO="Read-only: you can't save to the server.";
+I18N.es.beConflict="⚠ Versión más nueva en el servidor. Baja (☁⬇) antes de guardar.";I18N.en.beConflict="⚠ Newer version on the server. Pull (☁⬇) before saving.";
+I18N.es.beQueued="Sin conexión: cambios en cola para sincronizar.";I18N.en.beQueued="Offline: changes queued to sync.";
+I18N.es.usersTitle="Administrar usuarios";I18N.en.usersTitle="Manage users";
+I18N.es.usersEmail="Correo";I18N.en.usersEmail="Email";
+I18N.es.usersRole="Rol";I18N.en.usersRole="Role";
+I18N.es.usersAdd="Agregar";I18N.en.usersAdd="Add";
+I18N.es.usersNone="Sin usuarios todavía.";I18N.en.usersNone="No users yet.";
+I18N.es.usersUpdated="✓ Actualizado.";I18N.en.usersUpdated="✓ Updated.";
+
+function gisReady(){return typeof google!=="undefined"&&google.accounts&&google.accounts.id;}
+function beFetch(path,opts){opts=opts||{};opts.headers=Object.assign({Authorization:'Bearer '+beToken},opts.headers||{});return fetch(backendUrl+path,opts);}
+function beJsonH(){return {Authorization:'Bearer '+beToken,'Content-Type':'application/json'};}
+
+let gsiRendered=false;
+function beRenderGsi(){
+  if(gsiRendered||!gisReady()||!gClientId||!$('gsiBtnWrap'))return;
+  try{
+    google.accounts.id.initialize({client_id:gClientId,callback:beOnCredential,ux_mode:'popup',auto_select:false});
+    google.accounts.id.renderButton($('gsiBtnWrap'),{theme:'filled_blue',size:'large',text:'signin_with',shape:'rectangular',width:300});
+    gsiRendered=true;
+  }catch(e){}
+}
+async function beOnCredential(resp){
+  const idToken=resp&&resp.credential;if(!idToken)return;
+  try{
+    const r=await fetch(backendUrl+'/auth/google',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({idToken})});
+    if(!r.ok){const e=await r.json().catch(()=>({}));throw new Error(e.error||('HTTP '+r.status));}
+    const j=await r.json();beToken=j.token;beUser=j.user;role=beUser.role;applyRoleUI();beRefreshLoginBtn();
+    $('projStatus').className='status ok';$('projStatus').textContent=t('beSignedIn')+' '+beUser.email+' ('+t(beUser.role==='admin'?'roleAdmin':'roleViewer')+')';
+    await bePull();await beFlushQueue();
+  }catch(e){$('projStatus').className='status warn';$('projStatus').textContent=t('beAuthErr')+' '+(e.message||'');}
+}
+function beRefreshLoginBtn(){
+  const wrap=$('gsiBtnWrap'),loginB=$('beLoginBtn'),usersB=$('beUsersBtn'),driveB=$('gConnectBtn');
+  if(!backendOn()){if(wrap)wrap.style.display='none';if(loginB)loginB.style.display='none';if(usersB)usersB.style.display='none';if(driveB)driveB.style.display='';return;}
+  if(driveB)driveB.style.display='none';
+  if(beAuthed()){
+    if(wrap)wrap.style.display='none';
+    if(loginB){loginB.style.display='';loginB.textContent=t('beLogout')+' · '+beUser.email;}
+    if(usersB)usersB.style.display=(beUser.role==='admin')?'':'none';
+  }else{
+    if(loginB)loginB.style.display='none';
+    if(usersB)usersB.style.display='none';
+    if(wrap){wrap.style.display='';beRenderGsi();if(!gsiRendered)setTimeout(beRenderGsi,800);}
+  }
+}
+if($('beLoginBtn'))$('beLoginBtn').onclick=()=>{if(!beAuthed())return;beToken='';beUser=null;role='viewer';try{google.accounts.id.disableAutoSelect();}catch(e){}applyRoleUI();beRefreshLoginBtn();$('projStatus').className='status';$('projStatus').textContent=t('beSignedOut');};
+
+async function bePull(){
+  if(!beAuthed()){$('projStatus').className='status warn';$('projStatus').textContent=t('beNeedLogin');return;}
+  $('projStatus').className='status';$('projStatus').textContent=t('cloudPulling');
+  try{
+    const r=await beFetch('/api/projects');if(!r.ok)throw new Error('HTTP '+r.status);
+    const metas=await r.json();let n=0;
+    for(const m of metas){const local=await idbGet('projects',m.name);
+      if(local&&(local.updated||0)>=(m.updated||0))continue;
+      const fr=await beFetch('/api/projects/'+encodeURIComponent(m.name));if(!fr.ok)continue;
+      const full=await fr.json();const rec=full.data;if(rec&&rec.name){await idbPut('projects',rec);n++;}}
+    await refreshProjects();$('projStatus').className='status ok';$('projStatus').textContent=t('cloudPulled')+' '+n;
+  }catch(e){$('projStatus').className='status warn';$('projStatus').textContent=t('cloudErr')+' '+(e.message||'');}
+}
+async function bePushRec(rec){
+  if(!beAuthed()){await beQueueAdd(rec.name);return;}
+  if(beUser.role!=='admin'){$('projStatus').className='status warn';$('projStatus').textContent=t('beViewerRO');return;}
+  try{
+    const r=await beFetch('/api/projects/'+encodeURIComponent(rec.name),{method:'PUT',headers:beJsonH(),body:JSON.stringify(rec)});
+    if(r.status===403){$('projStatus').className='status warn';$('projStatus').textContent=t('beViewerRO');return;}
+    if(r.status===409){$('projStatus').className='status warn';$('projStatus').textContent=t('beConflict');return;}
+    if(!r.ok)throw new Error('HTTP '+r.status);
+    await beQueueRemove(rec.name);
+  }catch(e){await beQueueAdd(rec.name);$('projStatus').className='status warn';$('projStatus').textContent=t('beQueued');}
+}
+async function bePushAll(){
+  if(!beAuthed()){$('projStatus').className='status warn';$('projStatus').textContent=t('beNeedLogin');return;}
+  if(beUser.role!=='admin'){$('projStatus').className='status warn';$('projStatus').textContent=t('beViewerRO');return;}
+  $('projStatus').className='status';$('projStatus').textContent=t('cloudPushing');
+  try{const list=await idbAll('projects');let n=0;
+    for(const rec of list){const r=await beFetch('/api/projects/'+encodeURIComponent(rec.name),{method:'PUT',headers:beJsonH(),body:JSON.stringify(rec)});if(r.ok)n++;}
+    await beQueueClear();$('projStatus').className='status ok';$('projStatus').textContent=t('cloudPushed')+' '+n;
+  }catch(e){$('projStatus').className='status warn';$('projStatus').textContent=t('cloudErr')+' '+(e.message||'');}
+}
+async function beQueueGet(){if(!DB)return[];const q=await idbGet('settings','pushQueue').catch(()=>null);return(q&&q.names)||[];}
+async function beQueueSet(names){if(!DB)return;await idbPut('settings',{key:'pushQueue',names:Array.from(new Set(names))}).catch(()=>{});}
+async function beQueueAdd(name){const q=await beQueueGet();if(!q.includes(name)){q.push(name);await beQueueSet(q);}}
+async function beQueueRemove(name){const q=await beQueueGet();await beQueueSet(q.filter(n=>n!==name));}
+async function beQueueClear(){await beQueueSet([]);}
+async function beFlushQueue(){if(!beAuthed()||beUser.role!=='admin')return;const q=await beQueueGet();if(!q.length)return;
+  for(const name of q){const rec=await idbGet('projects',name);if(rec)await bePushRec(rec);}}
+window.addEventListener('online',()=>{if(beAuthed())beFlushQueue();});
+
+if($('beUsersBtn'))$('beUsersBtn').onclick=async()=>{if(!beAuthed()||beUser.role!=='admin')return;$('usersBg').classList.add('open');await beLoadUsers();};
+if($('usersX'))$('usersX').onclick=()=>$('usersBg').classList.remove('open');
+if($('usersClose'))$('usersClose').onclick=()=>$('usersBg').classList.remove('open');
+if($('usersBg'))$('usersBg').addEventListener('click',e=>{if(e.target===$('usersBg'))$('usersBg').classList.remove('open');});
+if($('addUserBtn'))$('addUserBtn').onclick=async()=>{const email=$('newUserEmail').value.trim().toLowerCase();const roleV=$('newUserRole').value;if(!email)return;await beSetRole(email,roleV);$('newUserEmail').value='';};
+async function beLoadUsers(){$('usersStatus').textContent='';const box=$('userList');box.innerHTML='';
+  try{const r=await beFetch('/api/users');if(!r.ok)throw new Error('HTTP '+r.status);const users=await r.json();
+    if(!users.length){box.textContent=t('usersNone');return;}
+    users.forEach(u=>box.appendChild(beUserRow(u)));
+  }catch(e){$('usersStatus').className='status warn';$('usersStatus').textContent=t('cloudErr')+' '+(e.message||'');}}
+function beUserRow(u){const row=document.createElement('div');row.className='ptrow';const self=u.email===beUser.email;
+  const info=document.createElement('div');info.style.cssText='flex:1;min-width:0';
+  info.innerHTML='<div class="nm" style="font-size:12px">'+esc(u.email)+(self?' · (tú)':'')+'</div>';
+  row.appendChild(info);
+  const sel=document.createElement('select');sel.className='inp';sel.style.cssText='width:auto;padding:5px;font-size:12px;flex:none';
+  sel.innerHTML='<option value="viewer">'+t('roleViewer')+'</option><option value="admin">'+t('roleAdmin')+'</option>';
+  sel.value=u.role;sel.disabled=self;sel.onchange=()=>beSetRole(u.email,sel.value);row.appendChild(sel);
+  if(!self){const del=document.createElement('button');del.className='del';del.textContent='✕';del.onclick=()=>beDeleteUser(u.email);row.appendChild(del);}
+  return row;}
+async function beSetRole(email,roleV){try{const r=await beFetch('/api/users/'+encodeURIComponent(email),{method:'PUT',headers:beJsonH(),body:JSON.stringify({role:roleV})});
+    if(!r.ok){const e=await r.json().catch(()=>({}));throw new Error(e.error||('HTTP '+r.status));}
+    $('usersStatus').className='status ok';$('usersStatus').textContent=t('usersUpdated');await beLoadUsers();
+  }catch(e){$('usersStatus').className='status warn';$('usersStatus').textContent=(e.message||'');}}
+async function beDeleteUser(email){try{const r=await beFetch('/api/users/'+encodeURIComponent(email),{method:'DELETE'});
+    if(r.status!==204&&!r.ok){const e=await r.json().catch(()=>({}));throw new Error(e.error||('HTTP '+r.status));}await beLoadUsers();
+  }catch(e){$('usersStatus').className='status warn';$('usersStatus').textContent=(e.message||'');}}
+
 /* ===== init ===== */
 async function init(){
-  try{if(window.indexedDB){DB=await idbOpen();const s=await idbGet('settings','app');adminPin=(s&&s.adminPin)||'';supaUrl=(s&&s.supaUrl)||'';supaKey=(s&&s.supaKey)||'';gClientId=(s&&s.gClientId)||'';gFolderId=(s&&s.gFolderId)||'';}}catch(e){DB=null;}
+  try{if(window.indexedDB){DB=await idbOpen();const s=await idbGet('settings','app');adminPin=(s&&s.adminPin)||'';supaUrl=(s&&s.supaUrl)||'';supaKey=(s&&s.supaKey)||'';gClientId=(s&&s.gClientId)||'';gFolderId=(s&&s.gFolderId)||'';backendUrl=(s&&s.backendUrl)||'';}}catch(e){DB=null;}
   const kbtn=document.createElement('button');kbtn.className='btn sm';kbtn.id='loadKmzBtn';kbtn.setAttribute('data-i18n','loadKmz');kbtn.style.marginTop='2px';
   const kin=document.createElement('input');kin.type='file';kin.id='kmzInput';kin.accept='.kmz,application/vnd.google-earth.kmz';kin.style.display='none';
   const fi=$('fileInput');fi.parentNode.insertBefore(kbtn,fi.nextSibling);fi.parentNode.insertBefore(kin,kbtn.nextSibling);
