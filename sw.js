@@ -9,5 +9,4 @@ self.addEventListener('fetch',e=>{const req=e.request;if(req.method!=='GET')retu
   e.respondWith(caches.match(req).then(hit=>hit||fetch(req).then(res=>{
     try{const u=new URL(req.url);if(u.origin===location.origin||u.host==='cdnjs.cloudflare.com'){const copy=res.clone();caches.open(CACHE).then(c=>c.put(req,copy));}}catch(_){}
     return res;
-  }).catch(()=>{if(req.mode==='navigate')return caches.match('./index.html');})));
-});
+  }).catch(()
