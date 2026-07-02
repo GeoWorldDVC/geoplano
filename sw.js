@@ -1,4 +1,4 @@
-const CACHE='geoplano-v9';
+const CACHE='geoplano-v10';
 const SHELL=['./','./index.html','./manifest.webmanifest','./icon-192.png','./icon-512.png','./apple-touch-icon.png',
   './favicon.ico','./favicon-16.png','./favicon-32.png','./logo-ypc.png','./viewer.html',
   'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js',
