@@ -1038,7 +1038,8 @@ const I18N={
 let lang=(navigator.language||navigator.userLanguage||'es').toLowerCase().startsWith('en')?'en':'es';
 const t=k=>(I18N[lang][k]??I18N.es[k]??k);
 const $=id=>document.getElementById(id);
-let fileState='idle',numPages=0,locked=false,role='admin',adminPin='';
+let fileState='idle',numPages=0,locked=false,role='viewer',adminPin='';
+const DEFAULT_PIN='8890';adminPin=DEFAULT_PIN;
 const VIEW_ONLY=new URLSearchParams(location.search).has('view');if(VIEW_ONLY)role='viewer';
 function applyLang(){document.documentElement.lang=lang;
   document.querySelectorAll('[data-i18n]').forEach(el=>el.textContent=t(el.dataset.i18n));
@@ -1580,7 +1581,7 @@ async function beDeleteUser(email){try{const r=await beFetch('/api/users/'+encod
 
 /* ===== init ===== */
 async function init(){
-  try{if(window.indexedDB){DB=await idbOpen();const s=await idbGet('settings','app');adminPin=(s&&s.adminPin)||'';supaUrl=(s&&s.supaUrl)||'';supaKey=(s&&s.supaKey)||'';gClientId=(s&&s.gClientId)||'';gFolderId=(s&&s.gFolderId)||'';backendUrl=(s&&s.backendUrl)||'';}}catch(e){DB=null;}
+  try{if(window.indexedDB){DB=await idbOpen();const s=await idbGet('settings','app');adminPin=(s&&s.adminPin)||DEFAULT_PIN;supaUrl=(s&&s.supaUrl)||'';supaKey=(s&&s.supaKey)||'';gClientId=(s&&s.gClientId)||'';gFolderId=(s&&s.gFolderId)||'';backendUrl=(s&&s.backendUrl)||'';}}catch(e){DB=null;}
   const kbtn=document.createElement('button');kbtn.className='btn sm';kbtn.id='loadKmzBtn';kbtn.setAttribute('data-i18n','loadKmz');kbtn.style.marginTop='2px';
   const kin=document.createElement('input');kin.type='file';kin.id='kmzInput';kin.accept='.kmz,application/vnd.google-earth.kmz';kin.style.display='none';
   const fi=$('fileInput');fi.parentNode.insertBefore(kbtn,fi.nextSibling);fi.parentNode.insertBefore(kin,kbtn.nextSibling);
