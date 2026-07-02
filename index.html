@@ -1037,6 +1037,7 @@ let lang=(navigator.language||navigator.userLanguage||'es').toLowerCase().starts
 const t=k=>(I18N[lang][k]??I18N.es[k]??k);
 const $=id=>document.getElementById(id);
 let fileState='idle',numPages=0,locked=false,role='admin',adminPin='';
+const VIEW_ONLY=new URLSearchParams(location.search).has('view');if(VIEW_ONLY)role='viewer';
 function applyLang(){document.documentElement.lang=lang;
   document.querySelectorAll('[data-i18n]').forEach(el=>el.textContent=t(el.dataset.i18n));
   document.querySelectorAll('[data-i18n-html]').forEach(el=>el.innerHTML=t(el.dataset.i18nHtml));
@@ -1209,7 +1210,7 @@ function applyRoleUI(){document.body.classList.toggle('viewer',role!=='admin');
   $('rolePill').className='pill '+(role==='admin'?'admin':'viewer');$('rolePill').textContent=t(role==='admin'?'roleAdmin':'roleViewer');
   Object.values(corners).forEach(m=>{if(m.dragging)m.dragging[(role==='admin'&&!locked)?'enable':'disable']();});
   points.forEach(p=>{if(p.marker.dragging)p.marker.dragging[role==='admin'?'enable':'disable']();});updatePlaneInteractivity();}
-$('rolePill').onclick=()=>{if(beAuthed())return;if(role==='admin'){role='viewer';applyRoleUI();}
+$('rolePill').onclick=()=>{if(VIEW_ONLY)return;if(beAuthed())return;if(role==='admin'){role='viewer';applyRoleUI();}
   else{if(adminPin){gmOpen(t('enterPin'),'',true,v=>{if(v===adminPin){role='admin';applyRoleUI();}else{$('projStatus').className='status warn';$('projStatus').textContent=t('wrongPin');}});}else{role='admin';applyRoleUI();}}};
 $('gearBtn').onclick=()=>{gmOpen(t('setPinTitle'),adminPin,true,async v=>{adminPin=v||'';if(DB){await idbPut('settings',{key:'app',adminPin,supaUrl,supaKey,gClientId,gFolderId,backendUrl}).catch(()=>{});}$('projStatus').className='status ok';$('projStatus').textContent=t('pinSet');});};
 let curName='';
@@ -1485,7 +1486,7 @@ async function beOnCredential(resp){
   try{
     const r=await fetch(backendUrl+'/auth/google',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({idToken})});
     if(!r.ok){const e=await r.json().catch(()=>({}));throw new Error(e.error||('HTTP '+r.status));}
-    const j=await r.json();beToken=j.token;beUser=j.user;role=beUser.role;applyRoleUI();beRefreshLoginBtn();
+    const j=await r.json();beToken=j.token;beUser=j.user;role=VIEW_ONLY?'viewer':beUser.role;applyRoleUI();beRefreshLoginBtn();
     $('projStatus').className='status ok';$('projStatus').textContent=t('beSignedIn')+' '+beUser.email+' ('+t(beUser.role==='admin'?'roleAdmin':'roleViewer')+')';
     await bePull();await beFlushQueue();
   }catch(e){$('projStatus').className='status warn';$('projStatus').textContent=t('beAuthErr')+' '+(e.message||'');}
