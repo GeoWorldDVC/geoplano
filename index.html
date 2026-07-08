@@ -870,6 +870,11 @@ https://github.com/nodeca/pako/blob/main/LICENSE
           <button class="btn sm admin-only" id="cloudCfgBtn" data-i18n="cloudCfg" style="flex:0 0 auto;width:auto;padding:7px 11px"></button>
         </div>
         <div id="gsiBtnWrap" style="display:none;margin:2px 0"></div>
+        <div id="pwLoginWrap" style="display:none;flex-direction:column;gap:4px;margin:2px 0">
+          <input class="inp" id="pwEmail" type="email" placeholder="Correo / Email" autocomplete="username" style="font-family:var(--sans)">
+          <input class="inp" id="pwPass" type="password" placeholder="Contraseña / Password" autocomplete="current-password">
+          <button class="btn sm" id="pwLoginBtn" data-i18n="pwLogin"></button>
+        </div>
         <button class="btn sm" id="beLoginBtn" style="display:none"></button>
         <button class="btn sm admin-only" id="beUsersBtn" data-i18n="beUsers" style="display:none"></button>
         <button class="btn sm" id="gConnectBtn" data-i18n="gConnect"></button>
@@ -1004,6 +1009,7 @@ https://github.com/nodeca/pako/blob/main/LICENSE
       <div class="field" style="flex:2"><label data-i18n="usersEmail"></label><input class="inp" id="newUserEmail" placeholder="persona@ypcconsulting.com" style="font-family:var(--sans)"></div>
       <div class="field" style="flex:1"><label data-i18n="usersRole"></label>
         <select class="inp" id="newUserRole"><option value="viewer" data-i18n="roleViewer"></option><option value="admin" data-i18n="roleAdmin"></option></select></div>
+      <div class="field" style="flex:1"><label data-i18n="usersPass"></label><input class="inp" id="newUserPass" type="text" placeholder="min 8" style="font-family:var(--sans)"></div>
       <button class="btn sm" id="addUserBtn" data-i18n="usersAdd" style="width:auto;padding:9px 12px"></button>
     </div>
     <div class="status" id="usersStatus"></div>
@@ -1526,6 +1532,11 @@ I18N.es.usersEmail="Correo";I18N.en.usersEmail="Email";
 I18N.es.usersRole="Rol";I18N.en.usersRole="Role";
 I18N.es.usersAdd="Agregar";I18N.en.usersAdd="Add";
 I18N.es.usersNone="Sin usuarios todavía.";I18N.en.usersNone="No users yet.";
+I18N.es.pwLogin="Entrar con contraseña";I18N.en.pwLogin="Sign in with password";
+I18N.es.usersPass="Contraseña";I18N.en.usersPass="Password";
+I18N.es.usersResetPw="Cambiar contraseña";I18N.en.usersResetPw="Reset password";
+I18N.es.usersResetPwFor="Nueva contraseña para";I18N.en.usersResetPwFor="New password for";
+I18N.es.usersPwSet="✓ Contraseña actualizada.";I18N.en.usersPwSet="✓ Password updated.";
 I18N.es.usersUpdated="✓ Actualizado.";I18N.en.usersUpdated="✓ Updated.";
 
 function gisReady(){return typeof google!=="undefined"&&google.accounts&&google.accounts.id;}
@@ -1552,19 +1563,36 @@ async function beOnCredential(resp){
   }catch(e){$('projStatus').className='status warn';$('projStatus').textContent=t('beAuthErr')+' '+(e.message||'');}
 }
 function beRefreshLoginBtn(){
-  const wrap=$('gsiBtnWrap'),loginB=$('beLoginBtn'),usersB=$('beUsersBtn'),driveB=$('gConnectBtn');
-  if(!backendOn()){if(wrap)wrap.style.display='none';if(loginB)loginB.style.display='none';if(usersB)usersB.style.display='none';if(driveB)driveB.style.display='';return;}
+  const wrap=$('gsiBtnWrap'),loginB=$('beLoginBtn'),usersB=$('beUsersBtn'),driveB=$('gConnectBtn'),pwWrap=$('pwLoginWrap');
+  if(!backendOn()){if(wrap)wrap.style.display='none';if(pwWrap)pwWrap.style.display='none';if(loginB)loginB.style.display='none';if(usersB)usersB.style.display='none';if(driveB)driveB.style.display='';return;}
   if(driveB)driveB.style.display='none';
   if(beAuthed()){
     if(wrap)wrap.style.display='none';
+    if(pwWrap)pwWrap.style.display='none';
     if(loginB){loginB.style.display='';loginB.textContent=t('beLogout')+' · '+beUser.email;}
     if(usersB)usersB.style.display=(beUser.role==='admin')?'':'none';
   }else{
     if(loginB)loginB.style.display='none';
     if(usersB)usersB.style.display='none';
+    if(pwWrap)pwWrap.style.display='flex';
     if(wrap){wrap.style.display='';beRenderGsi();if(!gsiRendered)setTimeout(beRenderGsi,800);}
   }
 }
+async function bePasswordLogin(){
+  if(!backendOn())return;
+  const email=$('pwEmail').value.trim().toLowerCase();const pass=$('pwPass').value;
+  if(!email||!pass){$('projStatus').className='status warn';$('projStatus').textContent=t('beNeedLogin');return;}
+  try{
+    const r=await fetch(backendUrl+'/auth/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email,password:pass})});
+    if(!r.ok){const e=await r.json().catch(()=>({}));throw new Error(e.error||('HTTP '+r.status));}
+    const j=await r.json();beToken=j.token;beUser=j.user;role=VIEW_ONLY?'viewer':beUser.role;$('pwPass').value='';
+    applyRoleUI();beRefreshLoginBtn();
+    $('projStatus').className='status ok';$('projStatus').textContent=t('beSignedIn')+' '+beUser.email+' ('+t(beUser.role==='admin'?'roleAdmin':'roleViewer')+')';
+    await bePull();await beFlushQueue();
+  }catch(e){$('projStatus').className='status warn';$('projStatus').textContent=t('beAuthErr')+' '+(e.message||'');}
+}
+if($('pwLoginBtn'))$('pwLoginBtn').onclick=bePasswordLogin;
+if($('pwPass'))$('pwPass').addEventListener('keydown',e=>{if(e.key==='Enter')bePasswordLogin();});
 if($('beLoginBtn'))$('beLoginBtn').onclick=()=>{if(!beAuthed())return;beToken='';beUser=null;role='viewer';try{google.accounts.id.disableAutoSelect();}catch(e){}applyRoleUI();beRefreshLoginBtn();$('projStatus').className='status';$('projStatus').textContent=t('beSignedOut');};
 
 async function bePull(){
@@ -1613,7 +1641,15 @@ if($('beUsersBtn'))$('beUsersBtn').onclick=async()=>{if(!beAuthed()||beUser.role
 if($('usersX'))$('usersX').onclick=()=>$('usersBg').classList.remove('open');
 if($('usersClose'))$('usersClose').onclick=()=>$('usersBg').classList.remove('open');
 if($('usersBg'))$('usersBg').addEventListener('click',e=>{if(e.target===$('usersBg'))$('usersBg').classList.remove('open');});
-if($('addUserBtn'))$('addUserBtn').onclick=async()=>{const email=$('newUserEmail').value.trim().toLowerCase();const roleV=$('newUserRole').value;if(!email)return;await beSetRole(email,roleV);$('newUserEmail').value='';};
+if($('addUserBtn'))$('addUserBtn').onclick=async()=>{const email=$('newUserEmail').value.trim().toLowerCase();const roleV=$('newUserRole').value;const pass=$('newUserPass')?$('newUserPass').value:'';if(!email)return;await beCreateUser(email,roleV,pass);$('newUserEmail').value='';if($('newUserPass'))$('newUserPass').value='';};
+async function beCreateUser(email,roleV,pass){try{const body={email,role:roleV};if(pass)body.password=pass;const r=await beFetch('/api/users',{method:'POST',headers:beJsonH(),body:JSON.stringify(body)});
+    if(!r.ok){const e=await r.json().catch(()=>({}));throw new Error(e.error||('HTTP '+r.status));}
+    $('usersStatus').className='status ok';$('usersStatus').textContent=t('usersUpdated');await beLoadUsers();
+  }catch(e){$('usersStatus').className='status warn';$('usersStatus').textContent=(e.message||'');}}
+async function beResetPw(email,pass){try{const r=await beFetch('/api/users/'+encodeURIComponent(email)+'/password',{method:'PUT',headers:beJsonH(),body:JSON.stringify({password:pass})});
+    if(r.status!==204&&!r.ok){const e=await r.json().catch(()=>({}));throw new Error(e.error||('HTTP '+r.status));}
+    $('usersStatus').className='status ok';$('usersStatus').textContent=t('usersPwSet');
+  }catch(e){$('usersStatus').className='status warn';$('usersStatus').textContent=(e.message||'');}}
 async function beLoadUsers(){$('usersStatus').textContent='';const box=$('userList');box.innerHTML='';
   try{const r=await beFetch('/api/users');if(!r.ok)throw new Error('HTTP '+r.status);const users=await r.json();
     if(!users.length){box.textContent=t('usersNone');return;}
@@ -1626,6 +1662,7 @@ function beUserRow(u){const row=document.createElement('div');row.className='ptr
   const sel=document.createElement('select');sel.className='inp';sel.style.cssText='width:auto;padding:5px;font-size:12px;flex:none';
   sel.innerHTML='<option value="viewer">'+t('roleViewer')+'</option><option value="admin">'+t('roleAdmin')+'</option>';
   sel.value=u.role;sel.disabled=self;sel.onchange=()=>beSetRole(u.email,sel.value);row.appendChild(sel);
+  const pw=document.createElement('button');pw.className='del';pw.textContent='🔑';pw.title=t('usersResetPw');pw.onclick=()=>{gmOpen(t('usersResetPwFor')+' '+u.email,'',true,async v=>{if(v)await beResetPw(u.email,v);});};row.appendChild(pw);
   if(!self){const del=document.createElement('button');del.className='del';del.textContent='✕';del.onclick=()=>beDeleteUser(u.email);row.appendChild(del);}
   return row;}
 async function beSetRole(email,roleV){try{const r=await beFetch('/api/users/'+encodeURIComponent(email),{method:'PUT',headers:beJsonH(),body:JSON.stringify({role:roleV})});
