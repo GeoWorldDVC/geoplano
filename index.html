@@ -769,6 +769,17 @@ https://github.com/nodeca/pako/blob/main/LICENSE
   .gps-dot{width:18px;height:18px;border-radius:50%;background:var(--gps);border:3px solid #fff;box-shadow:0 0 0 2px rgba(46,155,255,.5),0 2px 6px rgba(0,0,0,.6)}
   .gps-fab{position:absolute;bottom:52px;left:14px;z-index:900;width:42px;height:42px;border-radius:50%;background:var(--panel2);border:1px solid var(--line);color:var(--gps);font-size:20px;cursor:pointer;box-shadow:0 2px 10px rgba(0,0,0,.5)}
   .gps-fab.on{background:var(--gps);color:#fff;border-color:var(--gps)}
+  .ptrow .go{background:var(--panel2);border:1px solid var(--line);color:var(--gps);cursor:pointer;font:700 11px var(--sans);border-radius:6px;padding:4px 8px;flex:none;line-height:1}
+  .ptrow .go.on{background:var(--hivis);color:#1a1300;border-color:var(--hivis)}
+  .navgo{position:absolute;top:12px;left:50%;transform:translateX(-50%);z-index:950;display:flex;align-items:center;gap:11px;background:rgba(15,20,26,.94);border:1px solid var(--hivis);border-radius:12px;padding:9px 12px;box-shadow:0 4px 16px rgba(0,0,0,.55);min-width:200px;max-width:92vw}
+  .navgo .arrow{width:40px;height:40px;flex:none;display:flex;align-items:center;justify-content:center;font-size:30px;color:var(--hivis);transition:transform .18s ease}
+  .navgo .ninfo{flex:1;min-width:0}
+  .navgo .ntitle{font:700 13px var(--sans);color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .navgo .ndist{font:800 17px var(--mono);color:var(--hivis);line-height:1.15}
+  .navgo .nsub{font:600 10.5px var(--sans);color:var(--muted)}
+  .navgo.arrived{border-color:var(--ok)} .navgo.arrived .arrow{color:var(--ok)} .navgo.arrived .ndist{color:var(--ok)}
+  .navgo .nclose{background:none;border:none;color:var(--muted);cursor:pointer;font-size:16px;padding:0 2px;flex:none}
+  @media(max-width:760px){.navgo{top:calc(8px + env(safe-area-inset-top,0px))}}
   .btn.on{background:var(--warn);color:#fff;border-color:var(--warn)}
   .sheet-handle{display:none;width:52px;height:6px;border-radius:3px;background:var(--muted);margin:9px auto 3px;cursor:pointer}
   .add-fab{display:none;position:absolute;bottom:134px;left:14px;z-index:900;width:50px;height:50px;border-radius:50%;background:var(--hivis);color:#1a1300;border:none;font-size:28px;cursor:pointer;box-shadow:0 2px 10px rgba(0,0,0,.5);align-items:center;justify-content:center;line-height:0}
@@ -818,6 +829,15 @@ https://github.com/nodeca/pako/blob/main/LICENSE
   <div class="coordbar" id="coordbar">Lat —  Lng —</div>
   <div class="scalebar" id="scalebar">—</div>
   <button class="gps-fab" id="gpsFab" title="GPS">◎</button>
+  <div class="navgo" id="navGo" style="display:none">
+    <div class="arrow" id="navArrow">▲</div>
+    <div class="ninfo">
+      <div class="ntitle" id="navTitle"></div>
+      <div class="ndist" id="navDist"></div>
+      <div class="nsub" id="navSub"></div>
+    </div>
+    <button class="nclose" id="navClose" title="✕">✕</button>
+  </div>
   <button class="add-fab" id="addFab" title="+">＋</button>
   <aside class="side">
     <div class="sheet-handle" id="sheetHandle"></div>
@@ -925,8 +945,8 @@ https://github.com/nodeca/pako/blob/main/LICENSE
       </div>
       <div class="footnote" data-i18n="footnote"></div>
       <div class="footnote" data-i18n="offlineNote"></div>
-      <div class="footnote" style="opacity:.6;margin-top:2px;text-align:center">Para uso exclusivo de YPC Consulting Group, P.L. · Confidencial.</div>
-      <div class="footnote" style="opacity:.6;text-align:center">Desarrollado por DeDas (Dasiel VC)</div>
+      <div class="footnote" data-i18n="confidential" style="opacity:.6;margin-top:2px;text-align:center">Para uso exclusivo de YPC Consulting Group, P.L. · Confidencial.</div>
+      <div class="footnote" data-i18n="devBy" style="opacity:.6;text-align:center">Desarrollado por DeDas (Dasiel VC)</div>
     </div>
   </aside>
 </div>
@@ -1176,9 +1196,10 @@ function addPoint(latlng,opts){pushUndo();ptSeq++;const id=ptSeq;const isBM=!!op
 function renderPtList(){const box=$('ptlist');if(!box)return;box.innerHTML='';
   points.forEach(p=>{const ll=p.marker.getLatLng();const{n,e}=toNE(ll);const row=document.createElement('div');row.className='ptrow'+(p.isBM?' bm':'');
     row.innerHTML=`<span class="num">${p.id}</span><div style="flex:1;min-width:0"><input class="nm" value="${(p.name||'').replace(/"/g,'&quot;')}" ${role!=='admin'?'disabled':''}>
-      <div class="co">N ${n.toFixed(2)}  E ${e.toFixed(2)}${p.elev?'  El '+(+p.elev).toFixed(2):''} ft</div><div class="co">${ll.lat.toFixed(6)}, ${ll.lng.toFixed(6)}</div></div>${role==='admin'?'<button class="del">✕</button>':''}`;
+      <div class="co">N ${n.toFixed(2)}  E ${e.toFixed(2)}${p.elev?'  El '+(+p.elev).toFixed(2):''} ft</div><div class="co">${ll.lat.toFixed(6)}, ${ll.lng.toFixed(6)}</div></div><button class="go${navTarget===p?' on':''}" title="${t('navGo')}">➤</button>${role==='admin'?'<button class="del">✕</button>':''}`;
     const nm=row.querySelector('.nm');if(role==='admin'){nm.addEventListener('focus',pushUndo);nm.addEventListener('input',ev=>p.name=ev.target.value);
-      row.querySelector('.del').addEventListener('click',()=>{pushUndo();map.removeLayer(p.marker);points=points.filter(q=>q!==p);renderPtList();});}
+      row.querySelector('.del').addEventListener('click',()=>{pushUndo();if(navTarget===p)stopNav();map.removeLayer(p.marker);points=points.filter(q=>q!==p);renderPtList();});}
+    const goBtn=row.querySelector('.go');if(goBtn)goBtn.onclick=()=>{navTarget===p?stopNav():startNav(p);};
     box.appendChild(row);});
   $('ptStatus').textContent=points.length?points.length+' '+t('ptsWord'):t('noPts');$('kmlPtsBtn').disabled=!points.length;$('csvBtn').disabled=!points.length;}
 let syncing=false;
@@ -1222,7 +1243,7 @@ function gatherState(){return{name:curName,baseKey,opacity:imgW?parseFloat(plane
   plan:imgW?{dataURL:planDataURL,corners:{tl:{...corners.tl.getLatLng()},tr:{...corners.tr.getLatLng()},bl:{...corners.bl.getLatLng()}}}:null,
   points:points.map(p=>{const ll=p.marker.getLatLng();return{id:p.id,name:p.name,lineLabel:p.lineLabel,elev:p.elev,alt:p.alt,isBM:p.isBM,lat:ll.lat,lng:ll.lng};}),ptSeq};}
 function applyState(rec){setBase(rec.baseKey||'sat');if(rec.center)map.setView([rec.center.lat,rec.center.lng],rec.zoom||16);
-  points.forEach(p=>map.removeLayer(p.marker));points=[];ptSeq=rec.ptSeq||0;undoStack=[];redoStack=[];updoUI();
+  stopNav();points.forEach(p=>map.removeLayer(p.marker));points=[];ptSeq=rec.ptSeq||0;undoStack=[];redoStack=[];updoUI();
   const loadPts=()=>{(rec.points||[]).forEach(d=>{const mk=createMarker(d.id,L.latLng(d.lat,d.lng),d.isBM);points.push({id:d.id,name:d.name,lineLabel:d.lineLabel,elev:d.elev,alt:d.alt,isBM:d.isBM,marker:mk});});renderPtList();};
   if(rec.plan){setImage(rec.plan.dataURL,{corners:rec.plan.corners,opacity:rec.opacity,onReady:loadPts});}
   else{imgW=0;Object.values(corners).forEach(m=>map.removeLayer(m));corners={};planeImg.removeAttribute('src');$('opacityWrap').style.display='none';$('planTools').style.display='none';fileState='idle';$('filehint').innerHTML=t('fileIdle');loadPts();}}
@@ -1327,6 +1348,8 @@ map.on('move zoom viewreset resize',updateScaleBar);updateScaleBar();
 /* ===== GPS ===== */
 I18N.es.gpsTitle="Mi posición (GPS)";I18N.en.gpsTitle="My position (GPS)";
 I18N.es.gpsFollow="Seguir mi posición";I18N.en.gpsFollow="Follow my position";
+I18N.es.confidential="Para uso exclusivo de YPC Consulting Group, P.L. · Confidencial.";I18N.en.confidential="For the exclusive use of YPC Consulting Group, P.L. · Confidential.";
+I18N.es.devBy="Desarrollado por DeDas (Dasiel VC)";I18N.en.devBy="Developed by DeDas (Dasiel VC)";
 I18N.es.gpsOn="📍 Activar GPS";I18N.en.gpsOn="📍 Start GPS";
 I18N.es.gpsStopBtn="■ Detener GPS";I18N.en.gpsStopBtn="■ Stop GPS";
 I18N.es.gpsOff="GPS detenido.";I18N.en.gpsOff="GPS stopped.";
@@ -1339,6 +1362,7 @@ I18N.es.gpsUnavail="Posición no disponible (sin señal).";I18N.en.gpsUnavail="P
 I18N.es.gpsTimeout="Tiempo de espera agotado.";I18N.en.gpsTimeout="Request timed out.";
 I18N.es.gpsHint="Permite la ubicación y usa la app por HTTPS.";I18N.en.gpsHint="Allow location and use the app over HTTPS.";
 let gpsWatch=null,gpsMarker=null,gpsCircle=null,gpsFollow=true,gpsFirst=true;
+let navTarget=null,navLine=null,lastGpsLL=null,lastGpsAcc=0,devHeading=null,headingOn=false;
 function gpsMsg(txt,cls){const s=$('gpsStatus');s.textContent=txt;s.className='status'+(cls?' '+cls:'');}
 function setGpsBtnOn(on){$('gpsBtn').textContent=on?t('gpsStopBtn'):t('gpsOn');$('gpsBtn').classList.toggle('on',on);const fab=$('gpsFab');if(fab)fab.classList.toggle('on',on);}
 function refreshGpsLang(){setGpsBtnOn(gpsWatch!==null);const sw=$('gpsFollowSw');if(sw)sw.classList.toggle('on',gpsFollow);}
@@ -1350,6 +1374,7 @@ function gpsOk(pos){const lat=pos.coords.latitude,lng=pos.coords.longitude,acc=p
   if(gpsFollow&&gpsFirst){map.setView(ll,Math.max(map.getZoom(),18));gpsFirst=false;}else if(gpsFollow){map.panTo(ll);}
   const ne=toNE(ll);$('gpsReadout').style.display='block';
   $('gpsReadout').innerHTML='<div class="ro"><span>Lat</span><b>'+lat.toFixed(6)+'</b></div><div class="ro"><span>Lng</span><b>'+lng.toFixed(6)+'</b></div><div class="ro"><span>N ft</span><b>'+ne.n.toFixed(2)+'</b></div><div class="ro"><span>E ft</span><b>'+ne.e.toFixed(2)+'</b></div><div class="ro"><span>±</span><b>'+acc.toFixed(1)+' m</b></div>';
+  lastGpsLL=ll;lastGpsAcc=acc;if(navTarget)updateNav();
   gpsMsg(t('gpsLive'),'ok');}
 function gpsErr(e){const m={1:t('gpsDenied'),2:t('gpsUnavail'),3:t('gpsTimeout')};gpsMsg((m[e.code]||e.message)+' '+t('gpsHint'),'warn');gpsStop();}
 function gpsToggle(){if(gpsWatch!==null){gpsStop();return;}
@@ -1359,6 +1384,38 @@ function gpsToggle(){if(gpsWatch!==null){gpsStop();return;}
   gpsWatch=navigator.geolocation.watchPosition(gpsOk,gpsErr,{enableHighAccuracy:true,maximumAge:1000,timeout:15000});}
 $('gpsBtn').onclick=gpsToggle;$('gpsFab').onclick=gpsToggle;
 $('gpsFollowSw').onclick=function(){gpsFollow=!gpsFollow;this.classList.toggle('on',gpsFollow);};
+/* ===== Ir a un punto (navegar / estacar) ===== */
+I18N.es.navGo="Ir";I18N.en.navGo="Go";
+I18N.es.navArrived="✓ Llegaste (dentro de la precisión GPS)";I18N.en.navArrived="✓ Arrived (within GPS accuracy)";
+I18N.es.navGps="Activando GPS…";I18N.en.navGps="Turning on GPS…";
+I18N.es.navWait="Esperando señal GPS…";I18N.en.navWait="Waiting for GPS signal…";
+I18N.es.navHint="Camina hacia la flecha";I18N.en.navHint="Walk toward the arrow";
+const COMPASS={es:['N','NE','E','SE','S','SO','O','NO'],en:['N','NE','E','SE','S','SW','W','NW']};
+function compassPt(deg){return(COMPASS[lang]||COMPASS.en)[Math.round((((deg%360)+360)%360)/45)%8];}
+function bearingDeg(a,b){const r=Math.PI/180,f1=a.lat*r,f2=b.lat*r,dl=(b.lng-a.lng)*r;
+  const y=Math.sin(dl)*Math.cos(f2),x=Math.cos(f1)*Math.sin(f2)-Math.sin(f1)*Math.cos(f2)*Math.cos(dl);
+  return(Math.atan2(y,x)/r+360)%360;}
+function startHeading(){if(headingOn)return;
+  const on=e=>{let h=null;if(e.webkitCompassHeading!=null)h=e.webkitCompassHeading;else if(e.absolute&&e.alpha!=null)h=(360-e.alpha)%360;
+    if(h!=null){devHeading=h;if(navTarget)updateNav();}};
+  const attach=()=>{window.addEventListener('deviceorientationabsolute',on,true);window.addEventListener('deviceorientation',on,true);headingOn=true;};
+  try{if(typeof DeviceOrientationEvent!=='undefined'&&typeof DeviceOrientationEvent.requestPermission==='function'){
+    DeviceOrientationEvent.requestPermission().then(s=>{if(s==='granted')attach();}).catch(()=>{});}else attach();}catch(e){}}
+function startNav(p){navTarget=p;$('navGo').style.display='flex';renderPtList();
+  if(gpsWatch===null){gpsMsg(t('navGps'),'');gpsToggle();}
+  startHeading();updateNav();try{map.panTo(p.marker.getLatLng());}catch(e){}}
+function stopNav(){navTarget=null;if(navLine){map.removeLayer(navLine);navLine=null;}var g=$('navGo');if(g){g.style.display='none';g.classList.remove('arrived');}renderPtList();}
+function updateNav(){if(!navTarget)return;const tll=navTarget.marker.getLatLng();
+  $('navTitle').textContent=navTarget.name||('#'+navTarget.id);
+  if(!lastGpsLL){$('navDist').textContent='— ft';$('navSub').textContent=t('navWait');$('navGo').classList.remove('arrived');return;}
+  const dM=lastGpsLL.distanceTo(tll),dFt=dM*FT,brg=bearingDeg(lastGpsLL,tll);
+  if(!navLine)navLine=L.polyline([lastGpsLL,tll],{color:'#ffd21a',weight:2,dashArray:'6,6'}).addTo(map);
+  else navLine.setLatLngs([lastGpsLL,tll]);
+  $('navArrow').style.transform='rotate('+(brg-(devHeading!=null?devHeading:0))+'deg)';
+  $('navDist').textContent=dFt.toFixed(0)+' ft · '+compassPt(brg);
+  if(dM<=Math.max(lastGpsAcc||0,1.5)){$('navGo').classList.add('arrived');$('navSub').textContent=t('navArrived');}
+  else{$('navGo').classList.remove('arrived');$('navSub').textContent=(devHeading!=null?t('navHint'):(dM.toFixed(0)+' m · ±'+(lastGpsAcc||0).toFixed(0)+' m'));}}
+$('navClose').onclick=stopNav;
 /* ===== mobile sheet ===== */
 const sideEl=document.querySelector('.side');
 $('sheetHandle').onclick=()=>sideEl.classList.toggle('open');
