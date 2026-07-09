@@ -1564,10 +1564,10 @@ async function beOnCredential(resp){
 }
 function beRefreshLoginBtn(){
   const wrap=$('gsiBtnWrap'),loginB=$('beLoginBtn'),usersB=$('beUsersBtn'),driveB=$('gConnectBtn'),pwWrap=$('pwLoginWrap');
-  if(!backendOn()){if(wrap)wrap.style.display='none';if(pwWrap)pwWrap.style.display='none';if(loginB)loginB.style.display='none';if(usersB)usersB.style.display='none';if(driveB)driveB.style.display='';return;}
-  if(driveB)driveB.style.display='none';
+  if(wrap)wrap.style.display='none';      // Google sign-in hidden — username+password only
+  if(driveB)driveB.style.display='none';  // Drive connect hidden
+  if(!backendOn()){if(pwWrap)pwWrap.style.display='none';if(loginB)loginB.style.display='none';if(usersB)usersB.style.display='none';return;}
   if(beAuthed()){
-    if(wrap)wrap.style.display='none';
     if(pwWrap)pwWrap.style.display='none';
     if(loginB){loginB.style.display='';loginB.textContent=t('beLogout')+' · '+beUser.email;}
     if(usersB)usersB.style.display=(beUser.role==='admin')?'':'none';
@@ -1575,7 +1575,6 @@ function beRefreshLoginBtn(){
     if(loginB)loginB.style.display='none';
     if(usersB)usersB.style.display='none';
     if(pwWrap)pwWrap.style.display='flex';
-    if(wrap){wrap.style.display='';beRenderGsi();if(!gsiRendered)setTimeout(beRenderGsi,800);}
   }
 }
 async function bePasswordLogin(){
