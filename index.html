@@ -1064,7 +1064,7 @@ const I18N={
 let lang=(navigator.language||navigator.userLanguage||'es').toLowerCase().startsWith('en')?'en':'es';
 const t=k=>(I18N[lang][k]??I18N.es[k]??k);
 const $=id=>document.getElementById(id);
-let fileState='idle',numPages=0,locked=false,role='viewer',adminPin='';
+let fileState='idle',numPages=0,locked=true,role='viewer',adminPin='';
 const DEFAULT_PIN='8890';adminPin=DEFAULT_PIN;
 const VIEW_ONLY=new URLSearchParams(location.search).has('view');if(VIEW_ONLY)role='viewer';
 function applyLang(){document.documentElement.lang=lang;
@@ -1134,7 +1134,7 @@ function setImage(dataURL,opts){opts=opts||{};planDataURL=dataURL;
     Object.values(corners).forEach(m=>map.removeLayer(m));const c=opts.corners||defaultCorners();
     corners={tl:makeCorner(L.latLng(c.tl.lat,c.tl.lng),'TL'),tr:makeCorner(L.latLng(c.tr.lat,c.tr.lng),'TR'),bl:makeCorner(L.latLng(c.bl.lat,c.bl.lng),'BL')};
     if(opts.opacity){planeImg.style.opacity=opts.opacity;$('opacity').value=Math.round(opts.opacity*100);$('opacityVal').textContent=Math.round(opts.opacity*100)+'%';}
-    locked=false;setLockUI();renderPlane();$('opacityWrap').style.display='flex';$('planTools').style.display=role==='admin'?'flex':'none';
+    locked=true;setLockUI();renderPlane();$('opacityWrap').style.display='flex';$('planTools').style.display=role==='admin'?'flex':'none';
     $('scaleBtn').disabled=false;$('measureBtn').disabled=false;$('kmzBtn').disabled=false;fileState='plan';$('filehint').innerHTML=t('filePlan');if(opts.onReady)opts.onReady();};
   planeImg.src=dataURL;}
 let pdfDoc=null;
@@ -1148,6 +1148,7 @@ $('loadPageBtn').addEventListener('click',async()=>{if(!pdfDoc)return;
   const vp=page.getViewport({scale}),cv=document.createElement('canvas');cv.width=Math.round(vp.width);cv.height=Math.round(vp.height);
   await page.render({canvasContext:cv.getContext('2d'),viewport:vp}).promise;setImage(cv.toDataURL('image/png'));});
 function setLockUI(){const sh=locked?'none':'';Object.values(corners).forEach(m=>{m.dragging&&m.dragging[(locked||role!=='admin')?'disable':'enable']();if(m._icon)m._icon.style.display=sh;});
+  points.forEach(p=>{if(p.marker&&p.marker.dragging)p.marker.dragging[(locked||role!=='admin')?'disable':'enable']();});
   $('lockBtn').textContent=locked?t('lockEdit'):t('lockFix');updatePlaneInteractivity();}
 $('lockBtn').onclick=()=>{locked=!locked;setLockUI();};
 $('resetBtn').onclick=()=>{if(!imgW)return;pushUndo();const c=defaultCorners();corners.tl.setLatLng(c.tl);corners.tr.setLatLng(c.tr);corners.bl.setLatLng(c.bl);renderPlane();};
@@ -1196,7 +1197,7 @@ function applyScale(anchorLL,ratio){const A=map.latLngToLayerPoint(anchorLL);
 let points=[],ptSeq=0;
 function createMarker(id,latlng,isBM){const html=isBM?`<div class="bm-pin"><b>${id}</b></div>`:`<div class="pt-pin"><b>${id}</b></div>`;
   const ic=L.divIcon({className:'',html,iconSize:isBM?[22,19]:[18,18],iconAnchor:isBM?[11,19]:[9,16]});
-  const mk=L.marker(latlng,{draggable:role==='admin',icon:ic}).addTo(map);mk.on('dragstart',pushUndo);mk.on('drag dragend',renderPtList);return mk;}
+  const mk=L.marker(latlng,{draggable:role==='admin'&&!locked,icon:ic}).addTo(map);mk.on('dragstart',pushUndo);mk.on('drag dragend',renderPtList);return mk;}
 function addPoint(latlng,opts){pushUndo();ptSeq++;const id=ptSeq;const isBM=!!opts.isBM;const mk=createMarker(id,latlng,isBM);
   points.push({id,name:opts.name||((isBM?'BM':t('pointWord'))+' '+id),lineLabel:opts.lineLabel||'',elev:opts.elev||0,alt:opts.alt||0,isBM,marker:mk});renderPtList();}
 function renderPtList(){const box=$('ptlist');if(!box)return;box.innerHTML='';
@@ -1249,10 +1250,10 @@ function gatherState(){return{name:curName,baseKey,opacity:imgW?parseFloat(plane
   plan:imgW?{dataURL:planDataURL,corners:{tl:{...corners.tl.getLatLng()},tr:{...corners.tr.getLatLng()},bl:{...corners.bl.getLatLng()}}}:null,
   points:points.map(p=>{const ll=p.marker.getLatLng();return{id:p.id,name:p.name,lineLabel:p.lineLabel,elev:p.elev,alt:p.alt,isBM:p.isBM,lat:ll.lat,lng:ll.lng};}),ptSeq};}
 function applyState(rec){setBase(rec.baseKey||'sat');if(rec.center)map.setView([rec.center.lat,rec.center.lng],rec.zoom||16);
-  stopNav();points.forEach(p=>map.removeLayer(p.marker));points=[];ptSeq=rec.ptSeq||0;undoStack=[];redoStack=[];updoUI();
+  stopNav();points.forEach(p=>map.removeLayer(p.marker));points=[];ptSeq=rec.ptSeq||0;undoStack=[];redoStack=[];updoUI();locked=true;
   const loadPts=()=>{(rec.points||[]).forEach(d=>{const mk=createMarker(d.id,L.latLng(d.lat,d.lng),d.isBM);points.push({id:d.id,name:d.name,lineLabel:d.lineLabel,elev:d.elev,alt:d.alt,isBM:d.isBM,marker:mk});});renderPtList();};
   if(rec.plan){setImage(rec.plan.dataURL,{corners:rec.plan.corners,opacity:rec.opacity,onReady:loadPts});}
-  else{imgW=0;Object.values(corners).forEach(m=>map.removeLayer(m));corners={};planeImg.removeAttribute('src');$('opacityWrap').style.display='none';$('planTools').style.display='none';fileState='idle';$('filehint').innerHTML=t('fileIdle');loadPts();}}
+  else{imgW=0;Object.values(corners).forEach(m=>map.removeLayer(m));corners={};planeImg.removeAttribute('src');$('opacityWrap').style.display='none';$('planTools').style.display='none';fileState='idle';$('filehint').innerHTML=t('fileIdle');loadPts();setLockUI();}}
 async function refreshProjects(){const sel=$('projSelect');sel.innerHTML='';if(!DB){const o=document.createElement('option');o.textContent=t('noStore');sel.appendChild(o);return;}
   const list=(await idbAll('projects')).sort((a,b)=>(b.updated||0)-(a.updated||0));
   if(!list.length){const o=document.createElement('option');o.value='';o.textContent=t('noProj');sel.appendChild(o);}
@@ -1340,10 +1341,10 @@ async function loadKMZ(file){try{
   let dataURL=null;
   if(imgHref){let entry=zip.file(imgHref);if(!entry){const bn=imgHref.split('/').pop();const k=Object.keys(zip.files).find(n=>n.split('/').pop()===bn);if(k)entry=zip.file(k);}
     if(entry){const b64=await entry.async('base64');const ext=(imgHref.split('.').pop()||'png').toLowerCase();const mime=(ext==='jpg'||ext==='jpeg')?'image/jpeg':ext==='gif'?'image/gif':'image/png';dataURL='data:'+mime+';base64,'+b64;}}
-  curName='';points.forEach(p=>map.removeLayer(p.marker));points=[];ptSeq=0;undoStack=[];redoStack=[];updoUI();
+  curName='';points.forEach(p=>map.removeLayer(p.marker));points=[];ptSeq=0;undoStack=[];redoStack=[];updoUI();locked=true;
   const loadPts=()=>{pts.forEach(d=>{ptSeq++;const mk=createMarker(ptSeq,L.latLng(d.lat,d.lng),false);points.push({id:ptSeq,name:d.name||(t('pointWord')+' '+ptSeq),lineLabel:'',elev:d.elev||0,alt:0,isBM:false,marker:mk});});renderPtList();fitContent(cObj,pts);};
   if(dataURL&&cObj&&isFinite(cObj.tl.lat)){setImage(dataURL,{corners:{tl:cObj.tl,tr:cObj.tr,bl:cObj.bl},onReady:loadPts});}
-  else{imgW=0;Object.values(corners).forEach(m=>map.removeLayer(m));corners={};planeImg.removeAttribute('src');$('opacityWrap').style.display='none';$('planTools').style.display='none';fileState='idle';$('filehint').innerHTML=t('fileIdle');loadPts();}
+  else{imgW=0;Object.values(corners).forEach(m=>map.removeLayer(m));corners={};planeImg.removeAttribute('src');$('opacityWrap').style.display='none';$('planTools').style.display='none';fileState='idle';$('filehint').innerHTML=t('fileIdle');loadPts();setLockUI();}
   $('projStatus').className='status ok';$('projStatus').textContent=t('kmzLoaded')+' '+(pts.length+(dataURL?' + plano':''));
  }catch(e){$('projStatus').className='status warn';$('projStatus').textContent=t('kmzErr');}}
 /* ===== readouts ===== */
