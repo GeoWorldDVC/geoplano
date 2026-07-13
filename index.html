@@ -1548,12 +1548,13 @@ function beJsonH(){return {Authorization:'Bearer '+beToken,'Content-Type':'appli
 
 let gsiRendered=false;
 function beRenderGsi(){
-  if(gsiRendered||!gisReady()||!gClientId||!$('gsiBtnWrap'))return;
+  if(gsiRendered||!gClientId||!$('gsiBtnWrap'))return;
+  if(!gisReady()){setTimeout(beRenderGsi,400);return;}   // GIS script may load late on mobile — keep retrying
   try{
     google.accounts.id.initialize({client_id:gClientId,callback:beOnCredential,ux_mode:'popup',auto_select:false});
-    google.accounts.id.renderButton($('gsiBtnWrap'),{theme:'filled_blue',size:'large',text:'signin_with',shape:'rectangular',width:300});
+    google.accounts.id.renderButton($('gsiBtnWrap'),{theme:'filled_blue',size:'large',text:'signin_with',shape:'rectangular',width:260});
     gsiRendered=true;
-  }catch(e){}
+  }catch(e){setTimeout(beRenderGsi,700);}
 }
 async function beOnCredential(resp){
   const idToken=resp&&resp.credential;if(!idToken)return;
@@ -1578,6 +1579,7 @@ function beRefreshLoginBtn(){
     if(loginB)loginB.style.display='none';
     if(usersB)usersB.style.display='none';
     if(pwWrap)pwWrap.style.display='flex';
+    if(wrap&&gClientId){wrap.style.display='';beRenderGsi();}   // show Google sign-in button when logged out
   }
 }
 async function bePasswordLogin(){
