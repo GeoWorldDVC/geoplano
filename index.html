@@ -787,7 +787,7 @@ https://github.com/nodeca/pako/blob/main/LICENSE
   @media (max-width:760px){
     .app{position:relative}
     #map{position:absolute;inset:0}
-    .side{position:fixed;left:0;right:0;bottom:0;top:auto;width:auto;height:auto;max-height:84dvh;border-left:none;border-top:1px solid var(--line);border-radius:18px 18px 0 0;transform:translateY(calc(100% - 66px - env(safe-area-inset-bottom,0px)));transition:transform .25s ease;z-index:1200;padding-bottom:env(safe-area-inset-bottom,0px)}
+    .side{position:fixed;left:0;right:0;bottom:0;top:auto;width:auto;height:auto;max-height:84vh;max-height:84dvh;border-left:none;border-top:1px solid var(--line);border-radius:18px 18px 0 0;transform:translateY(calc(100% - 66px - env(safe-area-inset-bottom,0px)));transition:transform .25s ease;z-index:1200;padding-bottom:env(safe-area-inset-bottom,0px)}
     .side.open{transform:translateY(0)}
     .sheet-handle{display:block}
     .side header{border-radius:0}
@@ -1431,6 +1431,8 @@ const sideEl=document.querySelector('.side');
 $('sheetHandle').onclick=()=>sideEl.classList.toggle('open');
 /* tap the header (logo / title) to open-close the panel on mobile; ignore its buttons */
 (function(){var hdr=document.querySelector('.side header');if(hdr)hdr.addEventListener('click',function(e){if(window.innerWidth>760)return;if(e.target.closest('button,select,input,.pill,.langtog'))return;sideEl.classList.toggle('open');});})();
+/* tap the map to dismiss the sheet on mobile (so it never blocks the map) */
+map.on('click',function(){if(window.innerWidth<=760&&sideEl.classList.contains('open'))sideEl.classList.remove('open');});
 $('addFab').onclick=()=>{if(role==='admin'){sideEl.classList.remove('open');openModal();}};
 /* ===== cloud sync (Supabase) ===== */
 I18N.es.cloudPull="☁⬇ Bajar de la nube";I18N.en.cloudPull="☁⬇ Pull from cloud";
