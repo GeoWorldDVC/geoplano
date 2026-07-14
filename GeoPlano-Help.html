@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>GeoPlano — Help &amp; FAQ</title>
+<style>
+  :root{
+    --navy:#0f141a; --ink:#1f2937; --mut:#5b6673; --line:#e2e6ea; --bg:#f5f7f9;
+    --blue:#2563eb; --teal:#0d9488; --green:#16a34a; --purple:#7c3aed;
+    --amber:#b45309; --indigo:#4f46e5; --red:#dc2626;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+       color:var(--ink);background:var(--bg);line-height:1.5}
+  header{background:var(--navy);color:#fff;padding:20px 22px}
+  .hrow{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;max-width:1000px;margin:0 auto}
+  header h1{margin:0;font-size:22px}
+  header .sub{color:#9aa4af;font-size:13px;margin-top:2px}
+  .lang{display:flex;gap:0;border:1px solid #33404d;border-radius:8px;overflow:hidden}
+  .lang button{background:transparent;color:#c7ced6;border:0;padding:7px 14px;font-weight:700;cursor:pointer;font-size:13px}
+  .lang button.on{background:#2563eb;color:#fff}
+  .wrap{max-width:1000px;margin:0 auto;padding:18px 22px 60px}
+  .search{width:100%;padding:12px 14px;font-size:15px;border:1px solid var(--line);border-radius:10px;margin:14px 0}
+  .chips{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px}
+  .chip{border:1px solid var(--line);background:#fff;border-radius:999px;padding:6px 13px;font-size:13px;font-weight:600;
+        color:var(--mut);cursor:pointer;display:flex;align-items:center;gap:7px}
+  .chip.on{color:#fff;border-color:transparent}
+  .dot{width:9px;height:9px;border-radius:50%;display:inline-block}
+  .count{color:var(--mut);font-size:13px;margin:2px 0 12px}
+  .item{background:#fff;border:1px solid var(--line);border-radius:10px;margin-bottom:10px;overflow:hidden}
+  .q{display:flex;align-items:center;gap:11px;padding:14px 16px;cursor:pointer;font-weight:600;font-size:15px}
+  .q .tag{width:9px;height:9px;border-radius:50%;flex:none}
+  .q .plus{margin-left:auto;color:var(--mut);font-size:20px;line-height:1;transition:transform .15s;flex:none}
+  .item.open .plus{transform:rotate(45deg)}
+  .a{max-height:0;overflow:hidden;transition:max-height .2s ease;padding:0 16px}
+  .item.open .a{max-height:600px;padding:0 16px 15px 36px}
+  .a p{margin:0;color:#374151}
+  .cat-name{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.03em;margin-left:2px}
+  .empty{color:var(--mut);text-align:center;padding:40px}
+  footer{max-width:1000px;margin:0 auto;padding:0 22px 40px;color:var(--mut);font-size:12px}
+  .note{background:#fef3c7;border:1px solid #fcd34d;color:#7c5b09;border-radius:10px;padding:12px 14px;font-size:13px;margin-bottom:16px}
+</style>
+</head>
+<body>
+<header>
+  <div class="hrow">
+    <div>
+      <h1>GeoPlano — <span data-i="title">Help &amp; FAQ</span></h1>
+      <div class="sub" data-i="subtitle">How to use the app and what each button does · YPC Consulting Group</div>
+    </div>
+    <div class="lang">
+      <button id="enBtn" class="on" onclick="setLang('en')">EN</button>
+      <button id="esBtn" onclick="setLang('es')">ES</button>
+    </div>
+  </div>
+</header>
+
+<div class="wrap">
+  <div class="note" data-i="wip">⚠️ GeoPlano is still in active development — some buttons and behavior may change.</div>
+  <input class="search" id="search" oninput="render()" data-i-ph="Search a question or a button…">
+  <div class="chips" id="chips"></div>
+  <div class="count" id="count"></div>
+  <div id="list"></div>
+</div>
+<footer><span data-i="foot">Interactive help — GeoPlano field tool. Questions? Contact Dasiel.</span></footer>
+
+<script>
+var LANG='en';
+var UI={
+  title:{en:'Help & FAQ',es:'Ayuda y preguntas frecuentes'},
+  subtitle:{en:'How to use the app and what each button does · YPC Consulting Group',
+            es:'Cómo usar la app y qué hace cada botón · YPC Consulting Group'},
+  wip:{en:'⚠️ GeoPlano is still in active development — some buttons and behavior may change.',
+       es:'⚠️ GeoPlano aún está en desarrollo activo — algunos botones y comportamientos pueden cambiar.'},
+  foot:{en:'Interactive help — GeoPlano field tool. Questions? Contact Dasiel.',
+        es:'Ayuda interactiva — herramienta de campo GeoPlano. ¿Dudas? Contacta a Dasiel.'},
+  search_ph:{en:'Search a question or a button…',es:'Busca una pregunta o un botón…'},
+  all:{en:'All',es:'Todas'},
+  results:{en:'result(s)',es:'resultado(s)'}
+};
+var CATS={
+  start:{c:'#2563eb',en:'Getting started',es:'Primeros pasos'},
+  access:{c:'#4f46e5',en:'Login & access',es:'Acceso e inicio'},
+  buttons:{c:'#0d9488',en:'Buttons & panel',es:'Botones y panel'},
+  field:{c:'#16a34a',en:'In the field',es:'En el campo'},
+  points:{c:'#7c3aed',en:'Points & benchmarks',es:'Puntos y benchmarks'},
+  export:{c:'#b45309',en:'Export & sync',es:'Exportar y sincronizar'},
+  trouble:{c:'#dc2626',en:'Troubleshooting',es:'Solución de problemas'}
+};
+var FAQ=[
+ {cat:'start',
+  q:{en:'What is GeoPlano?',es:'¿Qué es GeoPlano?'},
+  a:{en:'A field app that overlays construction plans on a satellite map, shows your live GPS position, and lets you place coordinate points and benchmarks — then export them to Google Earth, AGTEK/Civil 3D or KML.',
+     es:'Una app de campo que superpone planos de construcción sobre un mapa satelital, muestra tu posición GPS en vivo y permite colocar puntos y benchmarks — y exportarlos a Google Earth, AGTEK/Civil 3D o KML.'}},
+ {cat:'start',
+  q:{en:'How do I open the app?',es:'¿Cómo abro la app?'},
+  a:{en:'Go to geoworlddvc.github.io/geoplano/ in Safari or Chrome. On the iPhone, tap Share → Add to Home Screen for one-tap access; it then works like a normal app, even offline.',
+     es:'Entra a geoworlddvc.github.io/geoplano/ en Safari o Chrome. En el iPhone, toca Compartir → Agregar a inicio para acceso de un toque; luego funciona como una app normal, incluso sin internet.'}},
+ {cat:'start',
+  q:{en:'How do I switch the language to Spanish?',es:'¿Cómo cambio el idioma a español?'},
+  a:{en:'Use the ES / EN switch at the top right of the app. It also auto-detects your phone language on first open.',
+     es:'Usa el interruptor ES / EN en la parte superior derecha de la app. También detecta el idioma de tu teléfono al abrir por primera vez.'}},
+
+ {cat:'access',
+  q:{en:'How do I log in?',es:'¿Cómo inicio sesión?'},
+  a:{en:'Tap "Sign in with Google" and choose your @ypcconsulting.com account, or enter a username + password. Access is internal only — personal emails are rejected.',
+     es:'Toca "Sign in with Google" y elige tu cuenta @ypcconsulting.com, o escribe usuario + contraseña. El acceso es solo interno — los correos personales se rechazan.'}},
+ {cat:'access',
+  q:{en:'The "Sign in with Google" button doesn’t appear',es:'No aparece el botón "Sign in with Google"'},
+  a:{en:'Reload the page with internet on (the Google sign-in script needs to load). If you added the app to the home screen before an update, remove it and add it again. You can always log in with username + password instead.',
+     es:'Recarga la página con internet (el script de Google debe cargar). Si agregaste la app a inicio antes de una actualización, quítala y vuelve a agregarla. Siempre puedes entrar con usuario + contraseña.'}},
+ {cat:'access',
+  q:{en:'I get "invalid_credentials"',es:'Me sale "invalid_credentials"'},
+  a:{en:'The username or password is wrong. Note the username is NOT your email — check it and try again, or ask an admin to reset your password.',
+     es:'El usuario o la contraseña son incorrectos. Ojo: el usuario NO es tu correo — verifícalo, o pide a un admin que restablezca tu contraseña.'}},
+ {cat:'access',
+  q:{en:'What’s the difference between admin and viewer?',es:'¿Cuál es la diferencia entre admin y viewer?'},
+  a:{en:'Admins can create and edit projects and points. Viewers see everything read-only (a "VIEW ONLY" badge shows at the top). Your role is set by an admin.',
+     es:'Los admin pueden crear y editar proyectos y puntos. Los viewer ven todo en solo-lectura (aparece el sello "VIEW ONLY" arriba). Tu rol lo asigna un admin.'}},
+
+ {cat:'buttons',
+  q:{en:'What does "Open" do?',es:'¿Qué hace "Open"?'},
+  a:{en:'Opens the project selected in the dropdown above it, loading its plan and points onto the map.',
+     es:'Abre el proyecto seleccionado en el menú de arriba, cargando su plano y sus puntos en el mapa.'}},
+ {cat:'buttons',
+  q:{en:'What does the "JSON" button do?',es:'¿Qué hace el botón "JSON"?'},
+  a:{en:'Exports or imports the whole project as a .json file — handy for a backup or to move a project between devices.',
+     es:'Exporta o importa el proyecto completo como archivo .json — útil para un respaldo o para mover un proyecto entre equipos.'}},
+ {cat:'buttons',
+  q:{en:'What is "Save this area’s map (offline)"?',es:'¿Qué es "Save this area’s map (offline)"?'},
+  a:{en:'Downloads the satellite tiles for the area you are viewing, so the map still shows with no signal in the field.',
+     es:'Descarga las imágenes (tiles) del área que estás viendo, para que el mapa se siga mostrando sin señal en el campo.'}},
+ {cat:'buttons',
+  q:{en:'What is "Download project for offline use"?',es:'¿Qué es "Download project for offline use"?'},
+  a:{en:'Saves the current project (plan + points) on the device so you can work fully offline.',
+     es:'Guarda el proyecto actual (plano + puntos) en el equipo para poder trabajar totalmente sin conexión.'}},
+ {cat:'buttons',
+  q:{en:'What does "Pull from cloud" do?',es:'¿Qué hace "Pull from cloud"?'},
+  a:{en:'Fetches the latest projects from the cloud database so you are up to date with what the team saved.',
+     es:'Trae los últimos proyectos de la base de datos en la nube para estar al día con lo que guardó el equipo.'}},
+
+ {cat:'field',
+  q:{en:'How do I load a plan and line it up?',es:'¿Cómo cargo un plano y lo alineo?'},
+  a:{en:'In "Fit the plan", load the plan image or PDF, then drag its corners to match known points on the satellite map. Use the transparency slider to see the map underneath while you align.',
+     es:'En "Fit the plan", carga la imagen o PDF del plano y arrastra sus esquinas para hacerlas coincidir con puntos conocidos del mapa. Usa el control de transparencia para ver el mapa debajo mientras alineas.'}},
+ {cat:'field',
+  q:{en:'What are Satellite / Streets / Topo?',es:'¿Qué son Satellite / Streets / Topo?'},
+  a:{en:'They switch the base map: aerial imagery (Satellite), a street map (Streets), or a topographic map (Topo).',
+     es:'Cambian el mapa base: imagen aérea (Satellite), callejero (Streets) o topográfico (Topo).'}},
+ {cat:'field',
+  q:{en:'How do I see my GPS position?',es:'¿Cómo veo mi posición GPS?'},
+  a:{en:'Tap "Start GPS" and allow location. A blue dot shows where you are on the plan. "Follow my position" keeps the map centered on you as you walk.',
+     es:'Toca "Start GPS" y permite la ubicación. Un punto azul muestra dónde estás sobre el plano. "Follow my position" mantiene el mapa centrado en ti mientras caminas.'}},
+ {cat:'field',
+  q:{en:'Does it work without internet?',es:'¿Funciona sin internet?'},
+  a:{en:'Yes. If you saved the map area and the project for offline use, everything works in the field with no signal; your changes sync to the cloud when you are back online.',
+     es:'Sí. Si guardaste el área del mapa y el proyecto para uso offline, todo funciona en el campo sin señal; tus cambios se sincronizan a la nube al reconectar.'}},
+
+ {cat:'points',
+  q:{en:'How do I add a point?',es:'¿Cómo agrego un punto?'},
+  a:{en:'In "Points & Benchmarks", tap add, then tap the map (or use your current GPS position). Give it a name and an elevation.',
+     es:'En "Points & Benchmarks", toca agregar y luego toca el mapa (o usa tu posición GPS actual). Ponle un nombre y una elevación.'}},
+ {cat:'points',
+  q:{en:'Point vs. benchmark — what’s the difference?',es:'Punto vs. benchmark — ¿cuál es la diferencia?'},
+  a:{en:'A benchmark (BM) is a control/reference point with a known elevation; a regular point is any located feature. Both store a name, elevation and coordinates.',
+     es:'Un benchmark (BM) es un punto de control/referencia con elevación conocida; un punto normal es cualquier elemento ubicado. Ambos guardan nombre, elevación y coordenadas.'}},
+ {cat:'points',
+  q:{en:'What coordinate system does it use?',es:'¿Qué sistema de coordenadas usa?'},
+  a:{en:'Points are stored in WGS84 (latitude/longitude). The app can also display NAD83 Florida West in US feet.',
+     es:'Los puntos se guardan en WGS84 (latitud/longitud). La app también puede mostrar NAD83 Florida West en pies.'}},
+
+ {cat:'export',
+  q:{en:'How do I export my points?',es:'¿Cómo exporto mis puntos?'},
+  a:{en:'In "Export", choose KMZ (Google Earth), PNEZD CSV (AGTEK / Civil 3D) or KML. The file downloads to your device to share or import.',
+     es:'En "Export", elige KMZ (Google Earth), PNEZD CSV (AGTEK / Civil 3D) o KML. El archivo se descarga a tu equipo para compartir o importar.'}},
+ {cat:'export',
+  q:{en:'What is PNEZD?',es:'¿Qué es PNEZD?'},
+  a:{en:'A point file format — Point, Northing, Easting, Z (elevation), Description — used by AGTEK and Civil 3D.',
+     es:'Un formato de puntos — Point, Northing, Easting, Z (elevación), Description — usado por AGTEK y Civil 3D.'}},
+
+ {cat:'trouble',
+  q:{en:'My changes don’t show up for a teammate',es:'Mis cambios no aparecen para un compañero'},
+  a:{en:'Make sure you are signed in and online, then use "Pull from cloud" on the other device. Offline changes upload once you reconnect.',
+     es:'Asegúrate de estar conectado y en línea, luego usa "Pull from cloud" en el otro equipo. Los cambios hechos offline se suben al reconectar.'}},
+ {cat:'trouble',
+  q:{en:'I still see an old version of the app',es:'Sigo viendo una versión vieja de la app'},
+  a:{en:'Reload the page. If it is installed on the home screen, remove it and add it again to clear the cache.',
+     es:'Recarga la página. Si está instalada en inicio, quítala y vuelve a agregarla para limpiar la caché.'}},
+ {cat:'trouble',
+  q:{en:'Something looks broken or a button changed',es:'Algo se ve mal o un botón cambió'},
+  a:{en:'GeoPlano is actively being refined and security-hardened, so some buttons and behavior may change. Report anything odd to Dasiel.',
+     es:'GeoPlano se está refinando y reforzando la seguridad, así que algunos botones y comportamientos pueden cambiar. Reporta cualquier cosa rara a Dasiel.'}}
+];
+
+var activeCat='all';
+function t(k){return UI[k][LANG]}
+
+function setLang(l){
+  LANG=l;
+  document.getElementById('enBtn').className = l==='en'?'on':'';
+  document.getElementById('esBtn').className = l==='es'?'on':'';
+  document.documentElement.lang=l;
+  document.querySelectorAll('[data-i]').forEach(function(el){var k=el.getAttribute('data-i');if(UI[k])el.textContent=UI[k][l];});
+  document.getElementById('search').placeholder=t('search_ph');
+  buildChips(); render();
+}
+
+function buildChips(){
+  var box=document.getElementById('chips'); box.innerHTML='';
+  var mk=function(key,label,color){
+    var el=document.createElement('div'); el.className='chip'+(activeCat===key?' on':'');
+    if(activeCat===key&&color) el.style.background=color;
+    el.innerHTML=(color?'<span class="dot" style="background:'+color+'"></span>':'')+label;
+    el.onclick=function(){activeCat=key;buildChips();render();};
+    box.appendChild(el);
+  };
+  mk('all',t('all'),null);
+  Object.keys(CATS).forEach(function(k){mk(k,CATS[k][LANG],CATS[k].c);});
+}
+
+function render(){
+  var q=(document.getElementById('search').value||'').toLowerCase().trim();
+  var list=document.getElementById('list'); list.innerHTML='';
+  var shown=0;
+  FAQ.forEach(function(it,idx){
+    if(activeCat!=='all'&&it.cat!==activeCat) return;
+    var text=(it.q[LANG]+' '+it.a[LANG]+' '+CATS[it.cat][LANG]).toLowerCase();
+    if(q&&text.indexOf(q)<0) return;
+    shown++;
+    var col=CATS[it.cat].c;
+    var d=document.createElement('div'); d.className='item';
+    d.innerHTML='<div class="q"><span class="tag" style="background:'+col+'"></span>'+
+      '<span>'+it.q[LANG]+'</span><span class="plus">+</span></div>'+
+      '<div class="a"><p>'+it.a[LANG]+'</p>'+
+      '<div class="cat-name" style="color:'+col+'">'+CATS[it.cat][LANG]+'</div></div>';
+    d.querySelector('.q').onclick=function(){d.classList.toggle('open');};
+    list.appendChild(d);
+  });
+  document.getElementById('count').textContent=shown+' '+t('results');
+  if(shown===0) list.innerHTML='<div class="empty">—</div>';
+}
+
+setLang('en');
+</script>
+</body>
+</html>

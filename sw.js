@@ -1,6 +1,6 @@
-const CACHE='geoplano-v18';
+const CACHE='geoplano-v19';
 const SHELL=['./','./index.html','./manifest.webmanifest','./icon-192.png','./icon-512.png','./apple-touch-icon.png',
-  './favicon.ico','./favicon-16.png','./favicon-32.png','./logo-ypc.png','./viewer.html',
+  './favicon.ico','./favicon-16.png','./favicon-32.png','./logo-ypc.png','./viewer.html','./GeoPlano-Help.html',
   'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js',
   'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js'];
 self.addEventListener('install',e=>{self.skipWaiting();e.waitUntil(caches.open(CACHE).then(c=>Promise.allSettled(SHELL.map(u=>c.add(u)))));});
