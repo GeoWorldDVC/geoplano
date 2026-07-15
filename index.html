@@ -761,6 +761,7 @@ https://github.com/nodeca/pako/blob/main/LICENSE
   .coordbar b{color:var(--hivis)}
   .scalebar{position:absolute;bottom:14px;left:300px;z-index:900;background:rgba(15,20,26,.85);border:1px solid var(--line);border-radius:8px;padding:6px 11px;font:600 11px var(--mono);color:var(--ink)}
   .footnote{font-size:10.5px;color:var(--muted);line-height:1.45;border-top:1px solid var(--line);padding-top:11px}
+  .appver{font-size:10px;font-weight:600;color:var(--muted);background:rgba(255,255,255,.06);border:1px solid var(--line);border-radius:10px;padding:1px 7px;margin-left:6px;letter-spacing:.02em;align-self:center;font-variant-numeric:tabular-nums}
   hr{border:none;border-top:1px solid var(--line);margin:0}
   .toggle{display:flex;align-items:center;justify-content:space-between;font-size:12.5px;color:var(--ink)}
   .switch{position:relative;width:40px;height:22px;background:var(--line);border-radius:11px;cursor:pointer;transition:.15s;flex:none}
@@ -842,7 +843,7 @@ https://github.com/nodeca/pako/blob/main/LICENSE
   <aside class="side">
     <div class="sheet-handle" id="sheetHandle"></div>
     <header>
-      <img class="logo-img" src="logo-ypc.png" alt="YPC Consulting Group, PL"><h1>GeoPlano</h1>
+      <img class="logo-img" src="logo-ypc.png" alt="YPC Consulting Group, PL"><h1>GeoPlano</h1><span id="appVer" class="appver" title="Versión de la app"></span>
       <span class="pill admin" id="rolePill"></span>
       <button class="iconbtn admin-only" id="gearBtn" title="PIN">⚙</button>
       <button class="iconbtn" id="helpBtn" title="Help / Ayuda" onclick="window.open('GeoPlano-Help.html','_blank','noopener')">?</button>
@@ -931,6 +932,13 @@ https://github.com/nodeca/pako/blob/main/LICENSE
         <button class="btn" id="measureBtn" data-i18n="verify" disabled></button>
         <div class="result" id="measResult" style="display:none"><div class="big" id="measBig">—</div><div class="sub" id="measSub" data-i18n="measSub"></div></div>
         <div class="status" id="scaleStatus"></div>
+        <button class="btn" id="georefBtn" data-i18n="georefCoord" disabled style="margin-top:6px"></button>
+        <div class="ptlist" id="ctrlList" style="display:none"></div>
+        <div class="row" id="georefRow" style="display:none">
+          <button class="btn sm" id="georefApplyBtn" data-i18n="georefApply"></button>
+          <button class="btn sm" id="georefClearBtn" data-i18n="georefClear"></button>
+        </div>
+        <div class="status" id="georefStatus"></div>
       </div>
       <hr class="admin-only">
       <div class="step">
@@ -953,6 +961,7 @@ https://github.com/nodeca/pako/blob/main/LICENSE
       <div class="footnote" data-i18n="offlineNote"></div>
       <div class="footnote" data-i18n="confidential" style="opacity:.6;margin-top:2px;text-align:center">Para uso exclusivo de YPC Consulting Group, P.L. · Confidencial.</div>
       <div class="footnote" data-i18n="devBy" style="opacity:.6;text-align:center">Desarrollado por DeDas (Dasiel VC)</div>
+      <div class="footnote" id="appVerFoot" style="opacity:.5;text-align:center;border:0;padding-top:2px;font-variant-numeric:tabular-nums"></div>
     </div>
   </aside>
 </div>
@@ -962,12 +971,12 @@ https://github.com/nodeca/pako/blob/main/LICENSE
     <div class="mgrid2">
       <div class="field"><label data-i18n="mNorth"></label><input class="inp" id="inNorth" type="number"></div>
       <div class="field"><label data-i18n="mEast"></label><input class="inp" id="inEast" type="number"></div></div>
-    <div class="mgrid2">
+    <div class="mgrid2" id="mElevAltRow">
       <div class="field"><label data-i18n="mElev"></label><input class="inp" id="inElev" type="number" value="0.000"></div>
       <div class="field"><label data-i18n="mAlt"></label><input class="inp" id="inAlt" type="number" value="0.000"></div></div>
-    <div class="field"><label data-i18n="mPtLabel"></label><input class="inp" id="inLabel" style="font-family:var(--sans)"></div>
-    <div class="field"><label data-i18n="mLineLabel"></label><input class="inp" id="inLine" style="font-family:var(--sans)"></div>
-    <label class="chk"><input type="checkbox" id="inBM"> <span data-i18n="mBench"></span></label>
+    <div class="field" id="mLabelField"><label data-i18n="mPtLabel"></label><input class="inp" id="inLabel" style="font-family:var(--sans)"></div>
+    <div class="field" id="mLineField"><label data-i18n="mLineLabel"></label><input class="inp" id="inLine" style="font-family:var(--sans)"></div>
+    <label class="chk" id="mBMChk"><input type="checkbox" id="inBM"> <span data-i18n="mBench"></span></label>
     <div class="seg" id="llTabs"><button data-tab="dec" class="active">Decimal</button><button data-tab="dms">DMS</button></div>
     <div id="decPane" class="mgrid2">
       <div class="field"><label data-i18n="mLat"></label><input class="inp" id="decLat" type="number"></div>
@@ -1010,7 +1019,7 @@ https://github.com/nodeca/pako/blob/main/LICENSE
       <div class="field" style="flex:2"><label data-i18n="usersEmail"></label><input class="inp" id="newUserEmail" placeholder="persona@ypcconsulting.com" style="font-family:var(--sans)"></div>
       <div class="field" style="flex:1"><label data-i18n="usersRole"></label>
         <select class="inp" id="newUserRole"><option value="viewer" data-i18n="roleViewer"></option><option value="admin" data-i18n="roleAdmin"></option></select></div>
-      <div class="field" style="flex:1"><label data-i18n="usersPass"></label><input class="inp" id="newUserPass" type="text" placeholder="min 8" style="font-family:var(--sans)"></div>
+      <div class="field" style="flex:1"><label data-i18n="usersPass"></label><input class="inp" id="newUserPass" type="text" placeholder="min 10" style="font-family:var(--sans)"></div>
       <button class="btn sm" id="addUserBtn" data-i18n="usersAdd" style="width:auto;padding:9px 12px"></button>
     </div>
     <div class="status" id="usersStatus"></div>
@@ -1066,7 +1075,14 @@ let lang=(navigator.language||navigator.userLanguage||'es').toLowerCase().starts
 const t=k=>(I18N[lang][k]??I18N.es[k]??k);
 const $=id=>document.getElementById(id);
 let fileState='idle',numPages=0,locked=true,role='viewer',adminPin='';
+/* Única fuente de la versión. APP_VERSION es el número de compilación (entero):
+   súbelo al desplegar cambios y cámbialo TAMBIÉN en sw.js (const VERSION='22')
+   para que los equipos se actualicen. Se muestra como "V0.<número>" (V0.22). */
+const APP_VERSION='22';
+const VERSION_LABEL='V0.'+APP_VERSION;
 const DEFAULT_PIN='8890';adminPin=DEFAULT_PIN;
+{const _av=$('appVer');if(_av)_av.textContent=VERSION_LABEL;
+ const _af=$('appVerFoot');if(_af)_af.textContent=VERSION_LABEL;}
 const DEFAULT_BACKEND='https://geoplano-api-607725330852.us-east1.run.app';
 const DEFAULT_CLIENT_ID='607725330852-p958n27jnriflk9crmhf2e5ibf28av22.apps.googleusercontent.com';
 const VIEW_ONLY=new URLSearchParams(location.search).has('view');if(VIEW_ONLY)role='viewer';
@@ -1138,7 +1154,7 @@ function setImage(dataURL,opts){opts=opts||{};planDataURL=dataURL;
     corners={tl:makeCorner(L.latLng(c.tl.lat,c.tl.lng),'TL'),tr:makeCorner(L.latLng(c.tr.lat,c.tr.lng),'TR'),bl:makeCorner(L.latLng(c.bl.lat,c.bl.lng),'BL')};
     if(opts.opacity){planeImg.style.opacity=opts.opacity;$('opacity').value=Math.round(opts.opacity*100);$('opacityVal').textContent=Math.round(opts.opacity*100)+'%';}
     locked=true;setLockUI();renderPlane();$('opacityWrap').style.display='flex';$('planTools').style.display=role==='admin'?'flex':'none';
-    $('scaleBtn').disabled=false;$('measureBtn').disabled=false;$('kmzBtn').disabled=false;fileState='plan';$('filehint').innerHTML=t('filePlan');if(opts.onReady)opts.onReady();};
+    $('scaleBtn').disabled=false;$('measureBtn').disabled=false;$('kmzBtn').disabled=false;$('georefBtn').disabled=false;fileState='plan';$('filehint').innerHTML=t('filePlan');if(opts.onReady)opts.onReady();};
   planeImg.src=dataURL;}
 let pdfDoc=null;
 $('fileInput').addEventListener('change',async e=>{const f=e.target.files[0];if(!f)return;
@@ -1174,10 +1190,12 @@ document.addEventListener('keydown',e=>{const tag=(document.activeElement&&docum
 let mode=null,clickA=null,tmpLine=null,tmpMarks=[],unit='ft';
 function setMode(m){mode=m;clickA=null;clearTmp();
   $('scaleBtn').classList.toggle('active',m==='scale');$('measureBtn').classList.toggle('active',m==='measure');$('pointBtn').classList.toggle('active',m==='point');
+  var gb=$('georefBtn');if(gb)gb.classList.toggle('active',m==='ctrl');
   map.getContainer().style.cursor=m?'crosshair':'';updatePlaneInteractivity();
   if(m==='scale'){$('scaleStatus').className='status';$('scaleStatus').textContent=t('scaleInstr');}
   else if(m==='measure'){$('scaleStatus').className='status';$('scaleStatus').textContent=t('measInstr');}
-  else if(m==='point'){$('ptStatus').textContent=t('pointInstr');}}
+  else if(m==='point'){$('ptStatus').textContent=t('pointInstr');}
+  else if(m==='ctrl'){$('georefStatus').className='status';$('georefStatus').textContent=t('georefInstr');}}
 function clearTmp(){if(tmpLine){map.removeLayer(tmpLine);tmpLine=null;}tmpMarks.forEach(m=>map.removeLayer(m));tmpMarks=[];}
 $('unitFt').onclick=()=>{unit='ft';$('unitFt').classList.add('active');$('unitM').classList.remove('active');};
 $('unitM').onclick=()=>{unit='m';$('unitM').classList.add('active');$('unitFt').classList.remove('active');};
@@ -1186,6 +1204,7 @@ $('measureBtn').onclick=()=>setMode(mode==='measure'?null:'measure');
 $('pointBtn').onclick=()=>setMode(mode==='point'?null:'point');
 map.on('click',e=>{if(role!=='admin'&&mode!=='measure')return;
   if(mode==='point'){addPoint(e.latlng,{});return;}
+  if(mode==='ctrl'){ctrlPick(e.latlng);return;}
   if(mode==='scale'||mode==='measure'){
     tmpMarks.push(L.circleMarker(e.latlng,{radius:5,color:'#fff',weight:2,fillColor:mode==='scale'?'#ffd21a':'#2e9bff',fillOpacity:1}).addTo(map));
     if(!clickA){clickA=e.latlng;}else{const dM=clickA.distanceTo(e.latlng);
@@ -1197,6 +1216,67 @@ map.on('click',e=>{if(role!=='admin'&&mode!=='measure')return;
       const keep=tmpLine;clearTmp();if(mode==='measure'&&keep){map.addLayer(keep);tmpLine=keep;}clickA=null;}}});
 function applyScale(anchorLL,ratio){const A=map.latLngToLayerPoint(anchorLL);
   ['tl','tr','bl'].forEach(k=>{const p=map.latLngToLayerPoint(corners[k].getLatLng());corners[k].setLatLng(map.layerPointToLatLng(L.point(A.x+ratio*(p.x-A.x),A.y+ratio*(p.y-A.y))));});renderPlane();}
+/* ===== Colocar por coordenadas (georreferenciar por puntos de control) =====
+   El usuario marca puntos CONOCIDOS del plano y les da su coordenada real.
+   Con 2+ pares (píxel del plano -> mundo) se resuelve una transformación de
+   Helmert de 4 parámetros (traslación + rotación + escala uniforme, sin
+   reflexión) en el plano State Plane NAD83 FL West (pies), se recolocan las 3
+   esquinas y se reporta el residual RMS. Resultado = BORRADOR (integridad). */
+I18N.es.georefCoord="📌 Colocar por coordenadas";I18N.en.georefCoord="📌 Place by coordinates";
+I18N.es.georefApply="✔ Aplicar georref.";I18N.en.georefApply="✔ Apply georef.";
+I18N.es.georefClear="✕ Limpiar";I18N.en.georefClear="✕ Clear";
+I18N.es.georefInstr="Clic en un punto CONOCIDO del plano; luego escribe su coordenada real.";I18N.en.georefInstr="Click a KNOWN point on the plan, then type its real coordinate.";
+I18N.es.georefAddMore="Punto de control agregado. Agrega 2+ y toca Aplicar.";I18N.en.georefAddMore="Control point added. Add 2+ and tap Apply.";
+I18N.es.georefNeed2="Necesitas 2+ puntos de control.";I18N.en.georefNeed2="Need 2+ control points.";
+I18N.es.georefBad="No se pudo calcular (puntos alineados o iguales).";I18N.en.georefBad="Couldn't solve (points collinear or identical).";
+I18N.es.georefDone="✓ Plano colocado por coordenadas";I18N.en.georefDone="✓ Plan placed by coordinates";
+I18N.es.georefRms="RMS";I18N.en.georefRms="RMS";
+I18N.es.georefExact="exacto con 2 pts; agrega un 3º para verificar";I18N.en.georefExact="exact with 2 pts; add a 3rd to verify";
+I18N.es.georefDraft="BORRADOR — verificar contra el plano firmado por el P.E.";I18N.en.georefDraft="DRAFT — verify against the P.E.-signed plan.";
+I18N.es.ctrlTitle="Coordenada real de este punto del plano";I18N.en.ctrlTitle="Real coordinate of this plan point";
+let ctrlPts=[],ctrlPending=null,ctrlMode=false;
+function invAffine(lp){const m=affine();const det=m.a*m.d-m.b*m.c;if(!det)return null;
+  const dx=lp.x-m.e,dy=lp.y-m.f;return{ix:(m.d*dx-m.c*dy)/det,iy:(-m.b*dx+m.a*dy)/det};}
+function setModalCtrlUI(on){['mElevAltRow','mLabelField','mLineField','mBMChk'].forEach(id=>{var el=$(id);if(el)el.style.display=on?'none':'';});
+  var h=document.querySelector('#modalBg h2');if(h)h.textContent=on?t('ctrlTitle'):t('modalTitle');}
+function openCtrlModal(latlng){ctrlMode=true;setModalCtrlUI(true);
+  $('decLat').value=latlng.lat.toFixed(8);$('decLng').value=latlng.lng.toFixed(8);syncFrom('dec');$('modalBg').classList.add('open');}
+function ctrlPick(latlng){if(!imgW){$('georefStatus').className='status warn';$('georefStatus').textContent=t('needPlan');return;}
+  const px=invAffine(map.latLngToLayerPoint(latlng));if(!px)return;ctrlPending={ix:px.ix,iy:px.iy};openCtrlModal(latlng);}
+function finalizeCtrlPoint(lat,lng){if(!ctrlPending)return;const{n,e}=toNE({lat,lng});const id=ctrlPts.length+1;
+  const mk=L.marker([lat,lng],{icon:L.divIcon({className:'',html:'<div style="background:#ff3b6b;color:#fff;border:2px solid #fff;border-radius:50%;width:20px;height:20px;font:700 10px/16px system-ui,sans-serif;text-align:center;box-shadow:0 1px 3px rgba(0,0,0,.5)">C'+id+'</div>',iconSize:[20,20],iconAnchor:[10,10]}),zIndexOffset:900}).addTo(map);
+  ctrlPts.push({ix:ctrlPending.ix,iy:ctrlPending.iy,lat,lng,e,n,marker:mk});ctrlPending=null;renderCtrlList();
+  $('georefStatus').className='status';$('georefStatus').textContent=t('georefAddMore');}
+function renderCtrlList(){const box=$('ctrlList');if(!box)return;box.innerHTML='';box.style.display=ctrlPts.length?'block':'none';
+  ctrlPts.forEach((p,i)=>{const row=document.createElement('div');row.className='ptrow';
+    row.innerHTML='<span class="num">C'+(i+1)+'</span><div style="flex:1;min-width:0"><div class="co">N '+p.n.toFixed(2)+'  E '+p.e.toFixed(2)+' ft</div><div class="co">'+p.lat.toFixed(6)+', '+p.lng.toFixed(6)+'</div></div><button class="del">✕</button>';
+    row.querySelector('.del').onclick=()=>{map.removeLayer(p.marker);ctrlPts.splice(i,1);renderCtrlList();};box.appendChild(row);});
+  $('georefRow').style.display=ctrlPts.length>=2?'flex':'none';}
+function ctrlClear(){ctrlPts.forEach(p=>map.removeLayer(p.marker));ctrlPts=[];ctrlPending=null;renderCtrlList();$('georefStatus').textContent='';}
+function helmert(src,dst){const n=src.length;if(n<2)return null;
+  let Sx=0,Sy=0,Sdx=0,Sdy=0,Sxx=0,Sxdx=0,Sxdy=0;
+  for(let i=0;i<n;i++){const sx=src[i].x,sy=src[i].y,dx=dst[i].x,dy=dst[i].y;
+    Sx+=sx;Sy+=sy;Sdx+=dx;Sdy+=dy;Sxx+=sx*sx+sy*sy;Sxdx+=sx*dx+sy*dy;Sxdy+=sx*dy-sy*dx;}
+  const denom=Sxx-(Sx*Sx+Sy*Sy)/n;if(Math.abs(denom)<1e-9)return null;
+  const a=(Sxdx-(Sx*Sdx+Sy*Sdy)/n)/denom,b=(Sxdy-(Sx*Sdy-Sy*Sdx)/n)/denom;
+  return{a,b,c:(Sdx-a*Sx+b*Sy)/n,d:(Sdy-b*Sx-a*Sy)/n};}
+function applyH(H,p){return{x:H.a*p.x-H.b*p.y+H.c,y:H.b*p.x+H.a*p.y+H.d};}
+function georefApply(){if(!imgW)return;
+  if(ctrlPts.length<2){$('georefStatus').className='status warn';$('georefStatus').textContent=t('georefNeed2');return;}
+  const src=ctrlPts.map(p=>({x:p.ix,y:imgH-p.iy})),dst=ctrlPts.map(p=>({x:p.e,y:p.n}));
+  const H=helmert(src,dst);if(!H){$('georefStatus').className='status warn';$('georefStatus').textContent=t('georefBad');return;}
+  let ss=0;for(let i=0;i<src.length;i++){const pr=applyH(H,src[i]);const ex=pr.x-dst[i].x,ny=pr.y-dst[i].y;ss+=ex*ex+ny*ny;}
+  const rms=Math.sqrt(ss/src.length);
+  const cw=(ix,iy)=>{const w=applyH(H,{x:ix,y:imgH-iy});return toLL(w.y,w.x);};
+  pushUndo();const tl=cw(0,0),tr=cw(imgW,0),bl=cw(0,imgH);
+  corners.tl.setLatLng([tl.lat,tl.lng]);corners.tr.setLatLng([tr.lat,tr.lng]);corners.bl.setLatLng([bl.lat,bl.lng]);
+  renderPlane();locked=true;setLockUI();
+  try{map.fitBounds(L.latLngBounds([[tl.lat,tl.lng],[tr.lat,tr.lng],[bl.lat,bl.lng]]).pad(0.2));}catch(e){}
+  setMode(null);const exact=ctrlPts.length<3;
+  $('georefStatus').className='status ok';
+  $('georefStatus').innerHTML=t('georefDone')+' · '+t('georefRms')+' '+(exact?('0 ('+t('georefExact')+')'):(rms.toFixed(2)+' ft'))+'<br><span style="opacity:.75">'+t('georefDraft')+'</span>';}
+$('georefBtn').onclick=()=>setMode(mode==='ctrl'?null:'ctrl');
+$('georefApplyBtn').onclick=georefApply;$('georefClearBtn').onclick=ctrlClear;
 let points=[],ptSeq=0;
 function createMarker(id,latlng,isBM){const html=isBM?`<div class="bm-pin"><b>${id}</b></div>`:`<div class="pt-pin"><b>${id}</b></div>`;
   const ic=L.divIcon({className:'',html,iconSize:isBM?[22,19]:[18,18],iconAnchor:isBM?[11,19]:[9,16]});
@@ -1205,7 +1285,7 @@ function addPoint(latlng,opts){pushUndo();ptSeq++;const id=ptSeq;const isBM=!!op
   points.push({id,name:opts.name||((isBM?'BM':t('pointWord'))+' '+id),lineLabel:opts.lineLabel||'',elev:opts.elev||0,alt:opts.alt||0,isBM,marker:mk});renderPtList();}
 function renderPtList(){const box=$('ptlist');if(!box)return;box.innerHTML='';
   points.forEach(p=>{const ll=p.marker.getLatLng();const{n,e}=toNE(ll);const row=document.createElement('div');row.className='ptrow'+(p.isBM?' bm':'');
-    row.innerHTML=`<span class="num">${p.id}</span><div style="flex:1;min-width:0"><input class="nm" value="${(p.name||'').replace(/"/g,'&quot;')}" ${role!=='admin'?'disabled':''}>
+    row.innerHTML=`<span class="num">${p.id}</span><div style="flex:1;min-width:0"><input class="nm" value="${esc(p.name||'').replace(/"/g,'&quot;')}" ${role!=='admin'?'disabled':''}>
       <div class="co">N ${n.toFixed(2)}  E ${e.toFixed(2)}${p.elev?'  El '+(+p.elev).toFixed(2):''} ft</div><div class="co">${ll.lat.toFixed(6)}, ${ll.lng.toFixed(6)}</div></div><button class="go${navTarget===p?' on':''}" title="${t('navGo')}">➤</button>${role==='admin'?'<button class="del">✕</button>':''}`;
     const nm=row.querySelector('.nm');if(role==='admin'){nm.addEventListener('focus',pushUndo);nm.addEventListener('input',ev=>p.name=ev.target.value);
       row.querySelector('.del').addEventListener('click',()=>{pushUndo();if(navTarget===p)stopNav();map.removeLayer(p.marker);points=points.filter(q=>q!==p);renderPtList();});}
@@ -1227,12 +1307,13 @@ function syncFrom(src){if(syncing)return;syncing=true;let lat,lng;
 ['latH','latD','latM','latS','lngH','lngD','lngM','lngS'].forEach(id=>$(id).addEventListener('input',()=>syncFrom('dms')));
 $('llTabs').addEventListener('click',e=>{const tab=e.target.dataset.tab;if(!tab)return;[...e.currentTarget.children].forEach(c=>c.classList.toggle('active',c===e.target));
   $('decPane').style.display=tab==='dec'?'grid':'none';$('dmsPane').style.display=tab==='dms'?'flex':'none';});
-function openModal(){const c=map.getCenter();$('inElev').value='0.000';$('inAlt').value='0.000';$('inLabel').value='';$('inLine').value='';$('inBM').checked=false;
+function openModal(){ctrlMode=false;setModalCtrlUI(false);const c=map.getCenter();$('inElev').value='0.000';$('inAlt').value='0.000';$('inLabel').value='';$('inLine').value='';$('inBM').checked=false;
   $('decLat').value=c.lat.toFixed(8);$('decLng').value=c.lng.toFixed(8);syncFrom('dec');$('modalBg').classList.add('open');}
-function closeModal(){$('modalBg').classList.remove('open');}
+function closeModal(){$('modalBg').classList.remove('open');ctrlMode=false;setModalCtrlUI(false);}
 $('coordBtn').onclick=openModal;$('modalX').onclick=closeModal;$('modalCancel').onclick=closeModal;
 $('modalBg').addEventListener('click',e=>{if(e.target===$('modalBg'))closeModal();});
 $('modalOk').onclick=()=>{const lat=parseFloat($('decLat').value),lng=parseFloat($('decLng').value);if(!isFinite(lat)||!isFinite(lng))return;
+  if(ctrlMode){finalizeCtrlPoint(lat,lng);closeModal();return;}
   const isBM=$('inBM').checked;addPoint(L.latLng(lat,lng),{name:$('inLabel').value.trim()||((isBM?'BM':t('pointWord'))+' '+(ptSeq+1)),lineLabel:$('inLine').value.trim(),elev:parseFloat($('inElev').value)||0,alt:parseFloat($('inAlt').value)||0,isBM});closeModal();};
 let gmCb=null;
 function gmOpen(title,value,pw,cb){$('gmTitle').textContent=title;const inp=$('gmInput');inp.style.display=cb===false?'none':'';inp.type=pw?'password':'text';inp.value=value||'';gmCb=cb;$('gmBg').classList.add('open');setTimeout(()=>inp.focus(),50);}
@@ -1488,7 +1569,7 @@ let gClientId="",gFolderId="",gToken="",gTokenExp=0,gTokenClient=null,gFolderRes
 function googleOn(){return !!gClientId;}
 function anyCloud(){return backendOn()||googleOn()||supaOn();}
 function gReady(){return typeof google!=="undefined"&&google.accounts&&google.accounts.oauth2;}
-function gEnsureClient(){if(!gTokenClient&&gReady()&&gClientId){gTokenClient=google.accounts.oauth2.initTokenClient({client_id:gClientId,scope:"https://www.googleapis.com/auth/drive",callback:function(resp){if(resp&&resp.access_token){gToken=resp.access_token;gTokenExp=Date.now()+((resp.expires_in||3500)*1000)-60000;if(gPending){gPending.res();gPending=null;}}else if(gPending){gPending.rej(new Error("auth"));gPending=null;}}});}return gTokenClient;}
+function gEnsureClient(){if(!gTokenClient&&gReady()&&gClientId){gTokenClient=google.accounts.oauth2.initTokenClient({client_id:gClientId,scope:"https://www.googleapis.com/auth/drive.file",callback:function(resp){if(resp&&resp.access_token){gToken=resp.access_token;gTokenExp=Date.now()+((resp.expires_in||3500)*1000)-60000;if(gPending){gPending.res();gPending=null;}}else if(gPending){gPending.rej(new Error("auth"));gPending=null;}}});}return gTokenClient;}
 function gConnect(interactive){return new Promise(function(res,rej){if(!gReady()){rej(new Error("GIS"));return;}if(!gClientId){rej(new Error("Client ID"));return;}gEnsureClient();gPending={res:res,rej:rej};try{gTokenClient.requestAccessToken({prompt:interactive?"consent":""});}catch(e){gPending=null;rej(e);}});}
 async function gTokenValid(){if(gToken&&Date.now()<gTokenExp)return gToken;await gConnect(!gToken);return gToken;}
 async function gFetch(url,opts){const tok=await gTokenValid();opts=opts||{};opts.headers=Object.assign({Authorization:"Bearer "+tok},opts.headers||{});let r=await fetch(url,opts);if(r.status===401){gToken="";const t2=await gTokenValid();opts.headers.Authorization="Bearer "+t2;r=await fetch(url,opts);}return r;}
